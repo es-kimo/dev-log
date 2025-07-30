@@ -1,0 +1,48 @@
+## 📝 Commit Message Rules
+
+### Format
+
+```
+<type>: <subject>
+
+<body>
+```
+
+### Types
+
+- `feat`: 새로운 기능 추가
+- `fix`: 버그 수정
+- `docs`: 문서 수정
+- `style`: 코드 포맷팅, 세미콜론 누락 등 (기능 변경 없음)
+- `refactor`: 코드 리팩토링
+- `test`: 테스트 코드 추가 또는 수정
+- `chore`: 빌드 프로세스 또는 보조 도구 변경
+
+### Rules
+
+1. **제목은 한국어로 작성**
+2. **"완료", "완료됨" 등의 문구 사용 금지**
+3. **Bullet point 설명은 필요할 때만 작성 (0-4개)**
+4. **각 bullet은 구체적이고 명확하게 작성**
+
+### Examples
+
+```bash
+# Good
+git commit -m "feat: 사용자 인증 기능 추가
+
+- JWT 토큰 기반 인증 구현
+- 로그인/로그아웃 API 엔드포인트 추가"
+
+# Good (no bullets needed)
+git commit -m "fix: 빌드 스크립트 오류 수정"
+
+# Bad (avoid "완료" words)
+git commit -m "feat: 프로젝트 초기화 완료"
+```
+
+description:
+globs:
+alwaysApply: false
+
+---
