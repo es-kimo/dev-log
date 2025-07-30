@@ -32,6 +32,18 @@ yarn test
 
 # Run tests with coverage
 yarn test:coverage
+
+# Run linting
+yarn lint
+
+# Fix linting issues automatically
+yarn lint:fix
+
+# Format code with Prettier
+yarn format
+
+# Check code formatting
+yarn format:check
 ```
 
 ## 📁 Project Structure
@@ -56,11 +68,18 @@ dev-log/
 - `yarn test:watch` - Run tests in watch mode
 - `yarn test:coverage` - Run tests with coverage report
 - `yarn clean` - Remove dist directory
+- `yarn lint` - Run ESLint to check code quality
+- `yarn lint:fix` - Run ESLint and automatically fix issues
+- `yarn format` - Format code with Prettier
+- `yarn format:check` - Check if code is properly formatted
 
 ## 🔧 Configuration
 
 - **TypeScript**: Configured for ES2022 with strict mode
 - **Jest**: Configured for TypeScript testing with coverage
+- **ESLint**: Configured with TypeScript support and Prettier integration
+- **Prettier**: Configured with 2-space indentation and consistent formatting
+- **Husky**: Pre-commit hooks for automatic linting and formatting
 - **Build**: Outputs to `dist/` directory with source maps
 
 ## 📝 License
