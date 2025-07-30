@@ -1,9 +1,9 @@
 ---
-name: "🛠 Common Task"
-about: "리팩터링·문서 보강·CI 설정 변경 등 범용 작업"
-title: "[Task] "
-labels: ["type:task", "priority:medium"]
-assignees: ""
+name: '🛠 Common Task'
+about: '리팩터링·문서 보강·CI 설정 변경 등 범용 작업'
+title: '[Task] '
+labels: ['type:task', 'priority:medium']
+assignees: ''
 ---
 
 ## 📝 Task Summary
