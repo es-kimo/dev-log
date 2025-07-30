@@ -1,0 +1,23 @@
+## 🎯 Project Overview
+
+This is a TypeScript-based Node.js 18 project for dev-log sync automation. Built with yarn, Jest for testing, and follows modern TypeScript practices.
+
+### Project Goals
+
+- GitLab→Notion 자동화 Job 구현
+- 다수의 백엔드 Job 추가 예정
+- 표준화된 빌드/테스트/린트 파이프라인 구축
+- 유지보수가 용이한 구조 정립
+
+### Tech Stack
+
+- **Runtime**: Node.js 18+
+- **Language**: TypeScript 5.x
+- **Package Manager**: Yarn
+- **Testing**: Jest with ts-jest
+- **Build**: TypeScript Compiler
+  description:
+  globs:
+  alwaysApply: false
+
+---

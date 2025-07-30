@@ -1,0 +1,53 @@
+## 🛠️ TypeScript Development Guidelines
+
+### TypeScript Standards
+
+- Use strict mode
+- Prefer explicit types over `any`
+- Use ES2022 features
+- Follow naming conventions (camelCase for variables, PascalCase for classes)
+
+### Code Style
+
+- Use 2 spaces for indentation
+- Use double quotes for strings
+- Add trailing commas in objects and arrays
+- Use semicolons
+
+### Testing Standards
+
+- Write tests for all new features
+- Use Jest with ts-jest
+- Aim for good test coverage
+- Use descriptive test names
+
+### Project Structure
+
+```
+src/
+├── index.ts          # Main entry point
+├── utils/            # Utility functions
+├── services/         # Business logic
+├── types/            # Type definitions
+└── __tests__/        # Test files
+```
+
+## 🚀 Available Scripts
+
+- `yarn dev` - Run in development mode
+- `yarn build` - Build the project
+- `yarn start` - Start the built application
+- `yarn test` - Run tests
+- `yarn test:coverage` - Run tests with coverage
+
+## 🔧 Dependencies
+
+- Node.js 18+
+- Yarn package manager
+- TypeScript 5.x
+- Jest for testing
+  description:
+  globs:
+  alwaysApply: false
+
+---
