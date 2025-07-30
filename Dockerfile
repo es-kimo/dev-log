@@ -30,7 +30,7 @@ WORKDIR /app
 COPY package.json yarn.lock .yarnrc.yml ./
 
 # Install only production dependencies
-RUN yarn install --immutable --production
+RUN yarn install --immutable
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
