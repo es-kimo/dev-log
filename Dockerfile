@@ -1,15 +1,20 @@
-# Build stage
+# Multi-stage Dockerfile for dev-log project
+# Stage 1: Build stage
 FROM node:18-alpine AS builder
 
 # Enable corepack for yarn
 RUN corepack enable
 
+# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package.json yarn.lock .yarnrc.yml ./
 
-# Install dependencies
+# Copy yarn configuration
+COPY .yarn ./.yarn
+
+# Install all dependencies (including dev dependencies for build)
 RUN yarn install --immutable
 
 # Copy source code
@@ -18,29 +23,34 @@ COPY . .
 # Build the application
 RUN yarn build
 
-# Production stage
+# Stage 2: Production stage
 FROM node:18-alpine AS production
 
 # Enable corepack for yarn
 RUN corepack enable
 
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package.json yarn.lock .yarnrc.yml ./
 
-# Install only production dependencies
-RUN yarn install --immutable
+# Copy yarn configuration
+COPY .yarn ./.yarn
+
+# Install only production dependencies and clean cache
+RUN yarn install --immutable && \
+    yarn cache clean && \
+    rm -rf /root/.cache /tmp/*
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
-
-# Change ownership of the app directory
-RUN chown -R nodejs:nodejs /app
+# Switch to non-root user
 USER nodejs
 
 # Expose port (if needed)

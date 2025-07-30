@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   dev-log:
     build:
@@ -7,38 +5,24 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: dev-log
-    restart: unless-stopped
     ports:
       - '3000:3000'
     environment:
       - NODE_ENV=production
+    env_file:
+      - .env
     volumes:
-      # Optional: Mount logs directory if needed
-      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
     healthcheck:
       test: ['CMD', 'node', '-e', "console.log('Health check passed')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - dev-log-network
 
-  # Development service with hot reload
-  dev-log-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: builder
-    container_name: dev-log-dev
-    restart: unless-stopped
-    ports:
-      - '3001:3000'
-    environment:
-      - NODE_ENV=development
-    volumes:
-      - ./src:/app/src
-      - ./package.json:/app/package.json
-      - ./yarn.lock:/app/yarn.lock
-      - ./tsconfig.json:/app/tsconfig.json
-    command: yarn dev
-    profiles:
-      - dev
+networks:
+  dev-log-network:
+    driver: bridge
