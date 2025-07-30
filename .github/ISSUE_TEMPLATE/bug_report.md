@@ -1,9 +1,9 @@
 ---
-name: "🐞 Bug Report"
-about: "버그·예외 상황 제보"
-title: "[Bug] "
-labels: ["type:bug", "priority:high"]
-assignees: ""
+name: '🐞 Bug Report'
+about: '버그·예외 상황 제보'
+title: '[Bug] '
+labels: ['type:bug', 'priority:high']
+assignees: ''
 ---
 
 ## 🐞 Bug Summary

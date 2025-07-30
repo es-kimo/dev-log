@@ -1,9 +1,9 @@
 ---
-name: "🚀 Feature / Job Task"
-about: "새 자동화 Job 또는 기능 개발 요청"
-title: "[Feat] "
-labels: ["type:feature", "priority:medium"]
-assignees: ""
+name: '🚀 Feature / Job Task'
+about: '새 자동화 Job 또는 기능 개발 요청'
+title: '[Feat] '
+labels: ['type:feature', 'priority:medium']
+assignees: ''
 ---
 
 ## 🎯 Goal
