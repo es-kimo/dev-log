@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package.json yarn.lock .yarnrc.yml ./
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN yarn install --immutable
 
 # Copy source code
 COPY . .
@@ -30,7 +30,7 @@ WORKDIR /app
 COPY package.json yarn.lock .yarnrc.yml ./
 
 # Install only production dependencies
-RUN yarn install --frozen-lockfile --production
+RUN yarn install --immutable --production
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
