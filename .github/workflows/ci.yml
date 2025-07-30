@@ -19,6 +19,9 @@ jobs:
           node-version: '18'
           cache: 'yarn'
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
@@ -41,6 +44,9 @@ jobs:
           node-version: '18'
           cache: 'yarn'
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
@@ -62,6 +68,9 @@ jobs:
         with:
           node-version: '18'
           cache: 'yarn'
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
