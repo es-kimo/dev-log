@@ -2,7 +2,7 @@ name: Docker Build and Push
 
 on:
   push:
-    branches: [main, 3-task-github-actions-ci-파이프라인-구축]
+    branches: [main]
     tags: ['v*']
 
 env:
