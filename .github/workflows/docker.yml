@@ -2,7 +2,7 @@ name: Docker Build and Push
 
 on:
   push:
-    branches: [main, 4-task-dockerfile-예시-docker-compose-추가]
+    branches: [main]
     tags: ['v*']
 
 env:
