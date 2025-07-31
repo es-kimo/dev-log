@@ -161,3 +161,74 @@ dev-log/
 ## 📝 License
 
 This project is licensed under the MIT License.
+
+## Usage
+
+```ts
+import { GitLabApiWrapper, gitLabApi, listMergedMrs } from './src/lib/gitlab';
+
+// GitLab API 클라이언트 싱글턴 사용
+const client = gitLabApi.getClient();
+
+// 병합된 MR 목록 조회 (문자열 날짜)
+const mergedMRs = await listMergedMrs({
+  projectId: 'your-group/your-project',
+  since: '2024-01-01T00:00:00Z',
+  until: '2024-01-31T23:59:59Z',
+  per_page: 50, // snake_case for GitLab API compatibility
+});
+
+// 병합된 MR 목록 조회 (Date 객체 - 자동 ISO 변환)
+const mergedMRs2 = await gitLabApi.listMergedMrs({
+  projectId: 'your-group/your-project',
+  since: new Date('2024-01-01'),
+  until: new Date('2024-01-31'),
+});
+
+// 페이징을 위한 이터레이터 사용 (대량 데이터 - 실제 페이징)
+for await (const page of gitLabApi.listMergedMrsIterator(
+  'your-group/your-project',
+  {
+    since: new Date('2024-01-01'),
+    per_page: 50,
+  }
+)) {
+  console.log(`Found ${page.length} merge requests in this page`);
+}
+
+// 커스텀 설정으로 인스턴스 생성 (DI 지원)
+const customGitLab = GitLabApiWrapper.getInstance(
+  {
+    host: 'https://custom.gitlab.com',
+    token: 'your-token',
+    timeout: 30000, // 30초 타임아웃
+  },
+  {
+    // 커스텀 로거
+    warn: (msg, meta) => console.warn(`[WARN] ${msg}`, meta),
+    error: (msg, meta) => console.error(`[ERROR] ${msg}`, meta),
+    info: (msg, meta) => console.info(`[INFO] ${msg}`, meta),
+  }
+);
+
+// 날짜 범위 검증 자동 수행
+try {
+  await gitLabApi.listMergedMrs({
+    projectId: 'test/project',
+    since: '2024-01-31T00:00:00Z',
+    until: '2024-01-01T00:00:00Z', // Error: since가 until보다 늦음
+  });
+} catch (error) {
+  console.error(error.message); // "since" must be earlier than "until"
+}
+```
+
+````
+
+> 환경변수: `.env` 또는 시스템 환경에 아래를 지정해야 합니다.
+>
+> ```env
+> GITLAB_HOST=https://gitlab.example.com
+> GITLAB_TOKEN=your-access-token
+> ```
+````

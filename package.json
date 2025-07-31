@@ -47,5 +47,13 @@
     "*.{js,jsx,json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "@gitbeaker/node": "~35.8.1",
+    "@gitbeaker/requester-utils": "~43.3.0",
+    "dotenv-flow": "^4.1.0",
+    "ky": "^1.8.2",
+    "ky-universal": "^0.12.0",
+    "zod": "^4.0.14"
   }
 }
