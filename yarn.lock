@@ -528,7 +528,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@gitbeaker/node@npm:^35.8.1":
+"@gitbeaker/node@npm:~35.8.1":
   version: 35.8.1
   resolution: "@gitbeaker/node@npm:35.8.1"
   dependencies:
@@ -552,7 +552,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@gitbeaker/requester-utils@npm:^43.3.0":
+"@gitbeaker/requester-utils@npm:~43.3.0":
   version: 43.3.0
   resolution: "@gitbeaker/requester-utils@npm:43.3.0"
   dependencies:
@@ -2204,8 +2204,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "dev-log@workspace:."
   dependencies:
-    "@gitbeaker/node": "npm:^35.8.1"
-    "@gitbeaker/requester-utils": "npm:^43.3.0"
+    "@gitbeaker/node": "npm:~35.8.1"
+    "@gitbeaker/requester-utils": "npm:~43.3.0"
     "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^24.1.0"
     "@typescript-eslint/eslint-plugin": "npm:^8.38.0"
