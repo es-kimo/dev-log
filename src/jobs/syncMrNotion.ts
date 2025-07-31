@@ -1,4 +1,4 @@
-import { listMergedMrs, type MergeRequest } from '../lib/gitlab';
+import { listMergedMrsByAuthor, type MergeRequest } from '../lib/gitlab';
 import { createOrUpdatePage, type PropertiesMap } from '../lib/notion';
 import { z } from 'zod';
 import dotenvFlow from 'dotenv-flow';
@@ -8,7 +8,10 @@ dotenvFlow.config();
 
 // Environment variable schema
 const envSchema = z.object({
-  GITLAB_PROJECT_ID: z.string().min(1, 'GITLAB_PROJECT_ID is required'),
+  GITLAB_AUTHOR_USERNAME: z
+    .string()
+    .min(1, 'GITLAB_AUTHOR_USERNAME is required'),
+  GITLAB_PROJECT_ID: z.string().optional(), // Optional: if not provided, searches all projects
   NOTION_DB_ID: z.string().min(1, 'NOTION_DB_ID is required'),
   NOTION_UNIQUE_KEY_PROP: z.string().optional(),
 });
@@ -29,7 +32,8 @@ const defaultLogger: Logger = {
 
 // Configuration interface
 interface SyncConfig {
-  projectId: string | number;
+  authorUsername: string;
+  projectId?: string | number; // Optional: if not provided, searches all projects
   databaseId: string;
   uniqueKeyProperty: string;
   daysBack: number;
@@ -157,6 +161,7 @@ export async function syncMrToNotion(
 
   // Merge config with defaults
   const finalConfig: SyncConfig = {
+    authorUsername: config?.authorUsername || env.GITLAB_AUTHOR_USERNAME,
     projectId: config?.projectId || env.GITLAB_PROJECT_ID,
     databaseId: config?.databaseId || env.NOTION_DB_ID,
     uniqueKeyProperty:
@@ -166,7 +171,8 @@ export async function syncMrToNotion(
   };
 
   logger.info('Starting MR sync to Notion', {
-    projectId: finalConfig.projectId,
+    authorUsername: finalConfig.authorUsername,
+    projectId: finalConfig.projectId || 'all projects',
     databaseId: finalConfig.databaseId,
     daysBack: finalConfig.daysBack,
   });
@@ -191,8 +197,9 @@ export async function syncMrToNotion(
       until: now.toISOString(),
     });
 
-    // Fetch merged MRs from GitLab
-    const mrs = await listMergedMrs({
+    // Fetch merged MRs from GitLab by author
+    const mrs = await listMergedMrsByAuthor({
+      author: finalConfig.authorUsername,
       projectId: finalConfig.projectId,
       since,
       until: now,

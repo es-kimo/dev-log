@@ -20,7 +20,12 @@ jest.mock('dotenv-flow', () => ({
 }));
 
 // Import after setting environment variables
-import { GitLabApiWrapper, MergeRequest, ListMergedMrsParams } from './gitlab';
+import {
+  GitLabApiWrapper,
+  MergeRequest,
+  ListMergedMrsParams,
+  ListMergedMrsByAuthorParams,
+} from './gitlab';
 import { Gitlab } from '@gitbeaker/node';
 
 describe('GitLab API Wrapper', () => {
@@ -260,6 +265,200 @@ describe('GitLab API Wrapper', () => {
 
       const instance = GitLabApiWrapper.getInstance();
       await expect(instance.listMergedMrs(params)).rejects.toThrow(
+        '"since" must be earlier than "until"'
+      );
+    });
+  });
+
+  describe('listMergedMrsByAuthor', () => {
+    const mockMergeRequests: MergeRequest[] = [
+      {
+        id: 1,
+        iid: 1,
+        title: 'Test MR 1',
+        description: 'Test description 1',
+        state: 'merged',
+        merged_at: '2024-01-01T10:00:00Z',
+        closed_at: null,
+        created_at: '2024-01-01T09:00:00Z',
+        updated_at: '2024-01-01T10:00:00Z',
+        target_branch: 'main',
+        source_branch: 'feature/test-1',
+        author: {
+          id: 1,
+          name: 'Test User',
+          username: 'testuser',
+        },
+        web_url: 'https://gitlab.example.com/test/project/-/merge_requests/1',
+      },
+      {
+        id: 2,
+        iid: 2,
+        title: 'Test MR 2',
+        description: 'Test description 2',
+        state: 'merged',
+        merged_at: '2024-01-02T10:00:00Z',
+        closed_at: null,
+        created_at: '2024-01-02T09:00:00Z',
+        updated_at: '2024-01-02T10:00:00Z',
+        target_branch: 'main',
+        source_branch: 'feature/test-2',
+        author: {
+          id: 2,
+          name: 'Test User 2',
+          username: 'testuser2',
+        },
+        web_url: 'https://gitlab.example.com/test/project/-/merge_requests/2',
+      },
+    ];
+
+    it('should return merged merge requests by author across all projects', async () => {
+      mockGitlabInstance.MergeRequests.all.mockResolvedValue(mockMergeRequests);
+
+      const params: ListMergedMrsByAuthorParams = {
+        author: 'testuser',
+        since: '2024-01-01T00:00:00Z',
+        until: '2024-01-31T23:59:59Z',
+        per_page: 50,
+      };
+
+      const instance = GitLabApiWrapper.getInstance();
+      const result = await instance.listMergedMrsByAuthor(params);
+
+      expect(result).toEqual(mockMergeRequests);
+      expect(mockGitlabInstance.MergeRequests.all).toHaveBeenCalledWith(
+        expect.objectContaining({
+          author_username: 'testuser',
+          state: 'merged',
+          updated_after: '2024-01-01T00:00:00Z',
+          updated_before: '2024-01-31T23:59:59Z',
+          per_page: 50,
+          order_by: 'updated_at',
+          sort: 'desc',
+          scope: 'all',
+        })
+      );
+    });
+
+    it('should return merged merge requests by author for specific project', async () => {
+      mockGitlabInstance.MergeRequests.all.mockResolvedValue(mockMergeRequests);
+
+      const params: ListMergedMrsByAuthorParams = {
+        author: 'testuser',
+        projectId: 'test/project',
+        since: '2024-01-01T00:00:00Z',
+        until: '2024-01-31T23:59:59Z',
+        per_page: 50,
+      };
+
+      const instance = GitLabApiWrapper.getInstance();
+      const result = await instance.listMergedMrsByAuthor(params);
+
+      expect(result).toEqual(mockMergeRequests);
+      expect(mockGitlabInstance.MergeRequests.all).toHaveBeenCalledWith(
+        expect.objectContaining({
+          author_username: 'testuser',
+          projectId: 'test/project',
+          state: 'merged',
+          updated_after: '2024-01-01T00:00:00Z',
+          updated_before: '2024-01-31T23:59:59Z',
+          per_page: 50,
+          order_by: 'updated_at',
+          sort: 'desc',
+          scope: 'all',
+        })
+      );
+    });
+
+    it('should accept Date objects for since and until', async () => {
+      mockGitlabInstance.MergeRequests.all.mockResolvedValue(mockMergeRequests);
+
+      const sinceDate = new Date('2024-01-01T00:00:00Z');
+      const untilDate = new Date('2024-01-31T23:59:59Z');
+
+      const params: ListMergedMrsByAuthorParams = {
+        author: 'testuser',
+        since: sinceDate,
+        until: untilDate,
+        per_page: 50,
+      };
+
+      const instance = GitLabApiWrapper.getInstance();
+      await instance.listMergedMrsByAuthor(params);
+
+      expect(mockGitlabInstance.MergeRequests.all).toHaveBeenCalledWith(
+        expect.objectContaining({
+          author_username: 'testuser',
+          state: 'merged',
+          updated_after: sinceDate.toISOString(),
+          updated_before: untilDate.toISOString(),
+          per_page: 50,
+          order_by: 'updated_at',
+          sort: 'desc',
+          scope: 'all',
+        })
+      );
+    });
+
+    it('should use default per_page when not provided', async () => {
+      mockGitlabInstance.MergeRequests.all.mockResolvedValue(mockMergeRequests);
+
+      const params: ListMergedMrsByAuthorParams = {
+        author: 'testuser',
+      };
+
+      const instance = GitLabApiWrapper.getInstance();
+      await instance.listMergedMrsByAuthor(params);
+
+      expect(mockGitlabInstance.MergeRequests.all).toHaveBeenCalledWith(
+        expect.objectContaining({
+          author_username: 'testuser',
+          state: 'merged',
+          updated_after: undefined,
+          updated_before: undefined,
+          per_page: 100,
+          order_by: 'updated_at',
+          sort: 'desc',
+          scope: 'all',
+        })
+      );
+    });
+
+    it('should handle API errors gracefully', async () => {
+      const error = new Error('API Error');
+      mockGitlabInstance.MergeRequests.all.mockRejectedValue(error);
+
+      const params: ListMergedMrsByAuthorParams = {
+        author: 'testuser',
+      };
+
+      const instance = GitLabApiWrapper.getInstance();
+      await expect(instance.listMergedMrsByAuthor(params)).rejects.toThrow(
+        'API Error'
+      );
+    });
+
+    it('should validate ISO 8601 date format', async () => {
+      const params: ListMergedMrsByAuthorParams = {
+        author: 'testuser',
+        since: 'invalid-date',
+      };
+
+      const instance = GitLabApiWrapper.getInstance();
+      await expect(instance.listMergedMrsByAuthor(params)).rejects.toThrow(
+        'Invalid ISO 8601 date format for "since" parameter'
+      );
+    });
+
+    it('should validate date range', async () => {
+      const params: ListMergedMrsByAuthorParams = {
+        author: 'testuser',
+        since: '2024-01-31T00:00:00Z',
+        until: '2024-01-01T00:00:00Z', // until is before since
+      };
+
+      const instance = GitLabApiWrapper.getInstance();
+      await expect(instance.listMergedMrsByAuthor(params)).rejects.toThrow(
         '"since" must be earlier than "until"'
       );
     });
