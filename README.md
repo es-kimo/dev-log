@@ -121,11 +121,18 @@ This project includes a comprehensive CI/CD pipeline with the following stages:
 dev-log/
 ├── src/                    # Source code
 │   ├── index.ts           # Main entry point
+│   ├── lib/               # API wrappers
+│   │   ├── gitlab.ts      # GitLab API wrapper
+│   │   └── notion.ts      # Notion API wrapper
+│   ├── jobs/              # Scheduled jobs
+│   │   ├── index.ts       # Job registry
+│   │   └── syncMrNotion.ts # MR sync job
 │   └── *.test.ts          # Test files
 ├── dist/                  # Compiled output (generated)
 ├── .github/workflows/     # CI/CD workflows
 │   ├── ci.yml            # CI pipeline
-│   └── docker.yml        # Docker build & push
+│   ├── docker.yml        # Docker build & push
+│   └── schedule.yml      # Scheduled jobs
 ├── Dockerfile            # Multi-stage Docker build
 ├── docker-compose.yml    # Local development setup
 ├── .dockerignore         # Docker build exclusions
@@ -157,6 +164,46 @@ dev-log/
 - **Husky**: Pre-commit hooks for automatic linting and formatting
 - **Build**: Outputs to `dist/` directory with source maps
 - **Docker**: Multi-stage build with production optimization
+
+## 📅 Scheduled Jobs
+
+### MR Sync Job (`syncMr`)
+
+Automatically syncs GitLab merge requests to Notion database on a weekly basis.
+
+**Schedule**: Every Monday at 03:00 KST (UTC 18:00)
+
+**Features**:
+
+- Syncs merged MRs from the last 7 days
+- Uses MR IID as unique key for upsert operations
+- Maps MR properties to Notion database fields
+- Handles errors gracefully with retry logic
+- Provides detailed logging and metrics
+
+**Environment Variables Required**:
+
+```env
+GITLAB_HOST=https://gitlab.example.com
+GITLAB_TOKEN=your-gitlab-token
+GITLAB_PROJECT_ID=your-project-id
+NOTION_TOKEN=your-notion-token
+NOTION_DB_ID=your-database-id
+NOTION_UNIQUE_KEY_PROP=MR IID  # Optional, defaults to "MR IID"
+```
+
+**Manual Execution**:
+
+```bash
+# Build the project
+yarn build
+
+# Run the sync job
+JOB=syncMr node dist/jobs/index.js
+```
+
+**GitHub Actions**:
+The job runs automatically via GitHub Actions workflow (`.github/workflows/schedule.yml`) and can also be triggered manually from the Actions tab.
 
 ## 📝 License
 

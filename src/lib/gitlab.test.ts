@@ -24,7 +24,6 @@ import { GitLabApiWrapper, MergeRequest, ListMergedMrsParams } from './gitlab';
 import { Gitlab } from '@gitbeaker/node';
 
 describe('GitLab API Wrapper', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockGitlabInstance: any;
 
   beforeEach(() => {

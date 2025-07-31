@@ -1,0 +1,50 @@
+name: Weekly MR Sync
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # 매주 월요일 03:00 KST (UTC 18:00)
+  workflow_dispatch: # 수동 실행 가능
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  weekly-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build project
+        run: yarn build
+
+      - name: Run MR sync job
+        env:
+          JOB: syncMr
+          GITLAB_HOST: ${{ secrets.GITLAB_HOST }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+          NOTION_UNIQUE_KEY_PROP: ${{ secrets.NOTION_UNIQUE_KEY_PROP }}
+        run: node dist/jobs/index.js
+
+      - name: Upload logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-logs
+          path: |
+            *.log
+            logs/
+          retention-days: 7
