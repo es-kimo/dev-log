@@ -67,6 +67,7 @@ export interface MergeRequest {
     username: string;
   };
   web_url: string;
+  labels?: string[] | Array<{ name: string }>;
 }
 
 // Project interface

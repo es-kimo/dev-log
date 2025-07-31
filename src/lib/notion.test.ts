@@ -20,7 +20,6 @@ jest.mock('p-queue', () => {
 });
 
 describe('NotionApiWrapper', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockClient: any;
   let mockLogger: jest.Mocked<Logger>;
   let notionWrapper: NotionApiWrapper;
@@ -126,7 +125,6 @@ describe('NotionApiWrapper', () => {
 
     it('should create new page when page does not exist', async () => {
       const mockPage = { id: 'new-page-id', properties: {} };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockSearchResults: any[] = [];
 
       mockClient.databases.query.mockResolvedValue({
@@ -167,7 +165,6 @@ describe('NotionApiWrapper', () => {
     it('should update existing page when page exists', async () => {
       const mockExistingPage = { id: 'existing-page-id', properties: {} };
       const mockUpdatedPage = { id: 'existing-page-id', properties: {} };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockSearchResults: any[] = [mockExistingPage];
 
       mockClient.databases.query.mockResolvedValue({
@@ -328,7 +325,6 @@ describe('NotionApiWrapper', () => {
 
     it('should retry on rate limit error and eventually succeed', async () => {
       const mockPage = { id: 'page-id', properties: {} };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rateLimitError = new Error('Rate limited') as any;
       rateLimitError.status = 429;
 
@@ -346,7 +342,6 @@ describe('NotionApiWrapper', () => {
     });
 
     it('should throw error after max retries', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rateLimitError = new Error('Rate limited') as any;
       rateLimitError.status = 429;
 
@@ -361,7 +356,6 @@ describe('NotionApiWrapper', () => {
     });
 
     it('should not retry on non-rate-limit errors', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const otherError = new Error('Other error') as any;
       otherError.status = 500;
 
@@ -381,7 +375,6 @@ describe('NotionApiWrapper', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const apiError = new Error('API Error') as any;
       apiError.status = 400;
       mockClient.pages.retrieve.mockRejectedValue(apiError);
