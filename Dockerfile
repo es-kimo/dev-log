@@ -11,9 +11,6 @@ WORKDIR /app
 # Copy package files
 COPY package.json yarn.lock .yarnrc.yml ./
 
-# Copy yarn configuration
-COPY .yarn ./.yarn
-
 # Install all dependencies (including dev dependencies for build)
 RUN yarn install --immutable
 
@@ -38,9 +35,6 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json yarn.lock .yarnrc.yml ./
-
-# Copy yarn configuration
-COPY .yarn ./.yarn
 
 # Install only production dependencies and clean cache
 RUN yarn install --immutable && \
