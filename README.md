@@ -49,7 +49,7 @@ yarn format:check
 
 ## 🐳 Docker
 
-### Using Docker
+### Build & Run
 
 ```bash
 # Build the Docker image
@@ -58,27 +58,38 @@ docker build -t dev-log .
 # Run the container
 docker run -p 3000:3000 dev-log
 
-# Run in development mode with hot reload
-docker-compose --profile dev up dev-log-dev
-
-# Run production container
-docker-compose up dev-log
+# Or use Docker Compose for easier management
+docker-compose up --build
 ```
 
 ### Docker Compose
 
 ```bash
-# Start production service
+# Start the application
 docker-compose up
 
-# Start development service with hot reload
-docker-compose --profile dev up dev-log-dev
+# Start in background
+docker-compose up -d
 
 # Build and start services
 docker-compose up --build
 
 # Stop services
 docker-compose down
+
+# View logs
+docker-compose logs -f dev-log-sync
+```
+
+### Environment Variables
+
+Create a `.env` file in the project root for environment variables:
+
+```bash
+# Example .env file
+NODE_ENV=production
+PORT=3000
+# Add your environment variables here
 ```
 
 ## 🔄 CI/CD Pipeline
