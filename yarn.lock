@@ -993,6 +993,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@notionhq/client@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "@notionhq/client@npm:4.0.1"
+  checksum: 10c0/bb635dc273ae9fa63909e2df805939ebd4947bf8f59dc9abeae1c6dfcc246927838060b7b226071cdd77908dfd79db2c68e997a5dd579f39849bb1ee2d7bc989
+  languageName: node
+  linkType: hard
+
 "@npmcli/agent@npm:^3.0.0":
   version: 3.0.0
   resolution: "@npmcli/agent@npm:3.0.0"
@@ -2206,6 +2213,7 @@ __metadata:
   dependencies:
     "@gitbeaker/node": "npm:~35.8.1"
     "@gitbeaker/requester-utils": "npm:~43.3.0"
+    "@notionhq/client": "npm:^4.0.1"
     "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^24.1.0"
     "@typescript-eslint/eslint-plugin": "npm:^8.38.0"
@@ -2219,6 +2227,7 @@ __metadata:
     ky: "npm:^1.8.2"
     ky-universal: "npm:^0.12.0"
     lint-staged: "npm:^16.1.2"
+    p-queue: "npm:^8.1.0"
     prettier: "npm:^3.6.2"
     ts-jest: "npm:^29.4.0"
     ts-node: "npm:^10.9.2"
@@ -4502,6 +4511,23 @@ __metadata:
   version: 7.0.3
   resolution: "p-map@npm:7.0.3"
   checksum: 10c0/46091610da2b38ce47bcd1d8b4835a6fa4e832848a6682cf1652bc93915770f4617afc844c10a77d1b3e56d2472bb2d5622353fa3ead01a7f42b04fc8e744a5c
+  languageName: node
+  linkType: hard
+
+"p-queue@npm:^8.1.0":
+  version: 8.1.0
+  resolution: "p-queue@npm:8.1.0"
+  dependencies:
+    eventemitter3: "npm:^5.0.1"
+    p-timeout: "npm:^6.1.2"
+  checksum: 10c0/6bdea170840546769c29682fed212745c951933476761ed3a981967fab624c7c0120dff79bd99a1ac8b650b420719a245813e944af4b8ee77d4dd78adbf5fe75
+  languageName: node
+  linkType: hard
+
+"p-timeout@npm:^6.1.2":
+  version: 6.1.4
+  resolution: "p-timeout@npm:6.1.4"
+  checksum: 10c0/019edad1c649ab07552aa456e40ce7575c4b8ae863191477f02ac8d283ac8c66cedef0ca93422735130477a051dfe952ba717641673fd3599befdd13f63bcc33
   languageName: node
   linkType: hard
 
