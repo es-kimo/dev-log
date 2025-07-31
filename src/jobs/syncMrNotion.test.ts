@@ -1,27 +1,28 @@
 import { jest } from '@jest/globals';
 import { syncMrToNotion } from './syncMrNotion';
-import { listMergedMrs } from '../lib/gitlab';
+import { listMergedMrsByAuthor } from '../lib/gitlab';
 import { createOrUpdatePage } from '../lib/notion';
 import type { MergeRequest } from '../lib/gitlab';
 
 // Mock environment variables
 process.env.GITLAB_HOST = 'https://gitlab.example.com';
 process.env.GITLAB_TOKEN = 'test-token';
+process.env.GITLAB_AUTHOR_USERNAME = 'testuser';
 process.env.GITLAB_PROJECT_ID = '12345';
 process.env.NOTION_TOKEN = 'test-notion-token';
 process.env.NOTION_DB_ID = 'test-db-id';
 
 // Mock dependencies
 jest.mock('../lib/gitlab', () => ({
-  listMergedMrs: jest.fn(),
+  listMergedMrsByAuthor: jest.fn(),
 }));
 
 jest.mock('../lib/notion', () => ({
   createOrUpdatePage: jest.fn(),
 }));
 
-const mockListMergedMrs = listMergedMrs as jest.MockedFunction<
-  typeof listMergedMrs
+const mockListMergedMrsByAuthor = listMergedMrsByAuthor as jest.MockedFunction<
+  typeof listMergedMrsByAuthor
 >;
 const mockCreateOrUpdatePage = createOrUpdatePage as jest.MockedFunction<
   typeof createOrUpdatePage
@@ -60,6 +61,7 @@ describe('syncMrToNotion', () => {
   beforeEach(() => {
     process.env.GITLAB_HOST = 'https://gitlab.example.com';
     process.env.GITLAB_TOKEN = 'test-token';
+    process.env.GITLAB_AUTHOR_USERNAME = 'testuser';
     process.env.GITLAB_PROJECT_ID = '12345';
     process.env.NOTION_TOKEN = 'test-notion-token';
     process.env.NOTION_DB_ID = 'test-db-id';
@@ -68,9 +70,10 @@ describe('syncMrToNotion', () => {
 
   describe('configuration', () => {
     it('should use environment variables for configuration', async () => {
-      mockListMergedMrs.mockResolvedValue([]);
+      mockListMergedMrsByAuthor.mockResolvedValue([]);
       await syncMrToNotion(undefined, mockLogger);
-      expect(mockListMergedMrs).toHaveBeenCalledWith({
+      expect(mockListMergedMrsByAuthor).toHaveBeenCalledWith({
+        author: 'testuser',
         projectId: '12345',
         since: expect.any(Date),
         until: expect.any(Date),
@@ -79,16 +82,18 @@ describe('syncMrToNotion', () => {
     });
 
     it('should use provided config over environment variables', async () => {
-      mockListMergedMrs.mockResolvedValue([]);
+      mockListMergedMrsByAuthor.mockResolvedValue([]);
       await syncMrToNotion(
         {
+          authorUsername: 'customuser',
           projectId: 'custom-project-id',
           databaseId: 'custom-db-id',
           daysBack: 14,
         },
         mockLogger
       );
-      expect(mockListMergedMrs).toHaveBeenCalledWith({
+      expect(mockListMergedMrsByAuthor).toHaveBeenCalledWith({
+        author: 'customuser',
         projectId: 'custom-project-id',
         since: expect.any(Date),
         until: expect.any(Date),
@@ -99,7 +104,7 @@ describe('syncMrToNotion', () => {
 
   describe('MR processing', () => {
     it('should sync MRs successfully', async () => {
-      mockListMergedMrs.mockResolvedValue([sampleMr]);
+      mockListMergedMrsByAuthor.mockResolvedValue([sampleMr]);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       const result = await syncMrToNotion(undefined, mockLogger);
       expect(result.total).toBe(1);
@@ -127,7 +132,7 @@ describe('syncMrToNotion', () => {
     it('should handle multiple MRs', async () => {
       const mr1 = { ...sampleMr, iid: 1, title: 'MR 1' };
       const mr2 = { ...sampleMr, iid: 2, title: 'MR 2' };
-      mockListMergedMrs.mockResolvedValue([mr1, mr2]);
+      mockListMergedMrsByAuthor.mockResolvedValue([mr1, mr2]);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       const result = await syncMrToNotion(undefined, mockLogger);
       expect(result.total).toBe(2);
@@ -145,7 +150,7 @@ describe('syncMrToNotion', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      mockListMergedMrs.mockResolvedValue([sampleMr]);
+      mockListMergedMrsByAuthor.mockResolvedValue([sampleMr]);
       mockCreateOrUpdatePage.mockRejectedValue(new Error('API Error'));
       const result = await syncMrToNotion(undefined, mockLogger);
       expect(result.total).toBe(1);
@@ -168,7 +173,9 @@ describe('syncMrToNotion', () => {
     });
 
     it('should handle GitLab API errors', async () => {
-      mockListMergedMrs.mockRejectedValue(new Error('GitLab API Error'));
+      mockListMergedMrsByAuthor.mockRejectedValue(
+        new Error('GitLab API Error')
+      );
       await expect(syncMrToNotion(undefined, mockLogger)).rejects.toThrow(
         'GitLab API Error'
       );
@@ -187,7 +194,7 @@ describe('syncMrToNotion', () => {
         ...sampleMr,
         labels: ['bug', 'enhancement'],
       };
-      mockListMergedMrs.mockResolvedValue([mrWithLabels]);
+      mockListMergedMrsByAuthor.mockResolvedValue([mrWithLabels]);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       await syncMrToNotion(undefined, mockLogger);
       const callArgs = mockCreateOrUpdatePage.mock.calls[0][0];
@@ -230,7 +237,7 @@ describe('syncMrToNotion', () => {
         ...sampleMr,
         merged_at: null,
       };
-      mockListMergedMrs.mockResolvedValue([mrWithoutMergedAt]);
+      mockListMergedMrsByAuthor.mockResolvedValue([mrWithoutMergedAt]);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       await syncMrToNotion(undefined, mockLogger);
       const callArgs = mockCreateOrUpdatePage.mock.calls[0][0];
@@ -242,7 +249,7 @@ describe('syncMrToNotion', () => {
         ...sampleMr,
         labels: undefined,
       };
-      mockListMergedMrs.mockResolvedValue([mrWithoutLabels]);
+      mockListMergedMrsByAuthor.mockResolvedValue([mrWithoutLabels]);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       await syncMrToNotion(undefined, mockLogger);
       const callArgs = mockCreateOrUpdatePage.mock.calls[0][0];
@@ -252,7 +259,7 @@ describe('syncMrToNotion', () => {
 
   describe('performance and timing', () => {
     it('should log execution time', async () => {
-      mockListMergedMrs.mockResolvedValue([]);
+      mockListMergedMrsByAuthor.mockResolvedValue([]);
       await syncMrToNotion(undefined, mockLogger);
       expect(mockLogger.info).toHaveBeenCalledWith(
         'MR sync completed',
@@ -261,7 +268,7 @@ describe('syncMrToNotion', () => {
           created: 0,
           updated: 0,
           failed: 0,
-          duration: expect.stringMatching(/^\d+ms$/),
+          duration: expect.stringMatching(/^[\d]+ms$/),
         })
       );
     });

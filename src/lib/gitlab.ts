@@ -89,6 +89,15 @@ export interface ListMergedMrsParams {
   per_page?: number; // Use snake_case for GitLab API compatibility
 }
 
+// List merged MRs by author parameters
+export interface ListMergedMrsByAuthorParams {
+  author: string; // author_username
+  since?: string | Date;
+  until?: string | Date;
+  projectId?: string | number; // Optional: if not provided, searches all projects
+  per_page?: number;
+}
+
 // Logger interface for dependency injection
 export interface Logger {
   warn(message: string, meta?: unknown): void;
@@ -195,6 +204,57 @@ export class GitLabApiWrapper {
         projectId,
         since: created_after,
         until: created_before,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * List merged merge requests by author across all projects or specific project
+   */
+  public async listMergedMrsByAuthor(
+    params: ListMergedMrsByAuthorParams
+  ): Promise<MergeRequest[]> {
+    const { author, since, until, projectId, per_page = 100 } = params;
+
+    // Convert dates to ISO strings if needed
+    const updated_after = toIso(since);
+    const updated_before = toIso(until);
+
+    // Validate ISO strings and date range
+    validateIsoString(updated_after, 'since');
+    validateIsoString(updated_before, 'until');
+    validateDateRange(updated_after, updated_before);
+
+    try {
+      // Build API parameters
+      const apiParams: Record<string, unknown> = {
+        author_username: author,
+        state: 'merged',
+        updated_after,
+        updated_before,
+        per_page,
+        order_by: 'updated_at',
+        sort: 'desc',
+        scope: 'all', // Search across all accessible projects
+      };
+
+      // Add projectId if specified
+      if (projectId) {
+        apiParams.projectId = projectId;
+      }
+
+      // Use object parameter for GitLab API compatibility
+      const mrs = await this.client.MergeRequests.all(apiParams);
+
+      return mrs as unknown as MergeRequest[];
+    } catch (error) {
+      this.logger.error('Failed to list merged merge requests by author:', {
+        author,
+        projectId,
+        since: updated_after,
+        until: updated_before,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
@@ -332,6 +392,8 @@ export { gitLabApi };
 export const getClient = () => gitLabApi.getClient();
 export const listMergedMrs = (params: ListMergedMrsParams) =>
   gitLabApi.listMergedMrs(params);
+export const listMergedMrsByAuthor = (params: ListMergedMrsByAuthorParams) =>
+  gitLabApi.listMergedMrsByAuthor(params);
 export const getMergeRequest = (projectId: string | number, mrIid: number) =>
   gitLabApi.getMergeRequest(projectId, mrIid);
 export const listProjects = (

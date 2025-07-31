@@ -175,18 +175,20 @@ Automatically syncs GitLab merge requests to Notion database on a weekly basis.
 
 **Features**:
 
-- Syncs merged MRs from the last 7 days
+- Syncs merged MRs from the last 7 days by author across all projects or specific project
 - Uses MR IID as unique key for upsert operations
 - Maps MR properties to Notion database fields
 - Handles errors gracefully with retry logic
 - Provides detailed logging and metrics
+- Supports both author-based filtering (all projects) and project-specific filtering
 
 **Environment Variables Required**:
 
 ```env
 GITLAB_HOST=https://gitlab.example.com
 GITLAB_TOKEN=your-gitlab-token
-GITLAB_PROJECT_ID=your-project-id
+GITLAB_AUTHOR_USERNAME=your-gitlab-username
+GITLAB_PROJECT_ID=your-project-id  # Optional: if not provided, searches all projects
 NOTION_TOKEN=your-notion-token
 NOTION_DB_ID=your-database-id
 NOTION_UNIQUE_KEY_PROP=MR IID  # Optional, defaults to "MR IID"
