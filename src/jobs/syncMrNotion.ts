@@ -43,6 +43,11 @@ function mapMrToNotionProperties(
 ): PropertiesMap {
   const properties: PropertiesMap = {};
 
+  // MR IID (Unique key for upsert)
+  properties['MR IID'] = {
+    number: mr.iid,
+  };
+
   // Title (MR title)
   properties['Title'] = {
     title: [
@@ -199,7 +204,7 @@ export async function syncMrToNotion(
     // Process each MR
     for (const mr of mrs) {
       try {
-        const uniqueKey = `MR-${mr.iid}`;
+        const uniqueKey = mr.iid.toString();
         const properties = mapMrToNotionProperties(mr);
 
         // Create or update page in Notion
