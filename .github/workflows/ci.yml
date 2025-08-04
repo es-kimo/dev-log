@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, 24-docs-set-up-dotenv-flow-env-management-update-readme]
+    branches: [main]
   pull_request:
-    branches: [main, 24-docs-set-up-dotenv-flow-env-management-update-readme]
+    branches: [main]
 
 jobs:
   lint:
