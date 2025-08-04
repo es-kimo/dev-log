@@ -1,0 +1,141 @@
+# GitLab CI configuration for dev-log project
+# This configuration mirrors the GitHub Actions workflows
+# for projects that are mirrored to GitLab
+
+# Define stages
+stages:
+  - lint
+  - test
+  - build
+  - docker
+
+# Global variables
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: '/certs'
+  REGISTRY: registry.gitlab.com
+  IMAGE_NAME: $CI_PROJECT_PATH
+  NODE_VERSION: '18'
+
+# Cache configuration for Node.js dependencies
+.node_cache: &node_cache
+  cache:
+    key:
+      files:
+        - yarn.lock
+    paths:
+      - .yarn/cache/
+      - node_modules/
+    policy: pull-push
+
+# Node.js job template
+.node_job: &node_job
+  image: node:18-alpine
+  before_script:
+    - corepack enable
+    - yarn install --immutable
+  <<: *node_cache
+
+# Lint stage
+lint:
+  stage: lint
+  <<: *node_job
+  script:
+    - yarn lint
+    - yarn format:check
+  only:
+    - merge_requests
+    - main
+
+# Test stage
+test:
+  stage: test
+  <<: *node_job
+  script:
+    - yarn test
+    - yarn test:coverage
+  variables:
+    NODE_ENV: test
+    LOG_LEVEL: info
+    GITLAB_HOST: https://gitlab.com
+    GITLAB_TOKEN: test-token
+    GITLAB_AUTHOR_USERNAME: test-user
+    NOTION_TOKEN: test-notion-token
+    NOTION_DB_ID: test-database-id
+  coverage: '/Lines\s*:\s*(\d+\.\d+)%/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    paths:
+      - coverage/
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+
+# Build stage
+build:
+  stage: build
+  <<: *node_job
+  script:
+    - yarn build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 hour
+  only:
+    - merge_requests
+    - main
+
+# Docker build and push (only on main branch)
+docker:
+  stage: docker
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: '/certs/client'
+  before_script:
+    # Login to GitLab Container Registry
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    # Build the Docker image
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+
+    # Test the Docker image
+    - docker run --rm $CI_REGISTRY_IMAGE:latest node --version
+    - docker run --rm $CI_REGISTRY_IMAGE:latest ls -la dist/
+
+    # Test job dispatcher with invalid job (should show available jobs)
+    - docker run --rm -e JOB=nonexistent $CI_REGISTRY_IMAGE:latest || echo "Expected failure for invalid job"
+
+    # Test without JOB env var (should show usage instructions)
+    - docker run --rm $CI_REGISTRY_IMAGE:latest || echo "Expected failure without JOB env var"
+
+    # Push to registry
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  after_script:
+    - docker logout $CI_REGISTRY
+  only:
+    - main
+
+# Manual job to run specific dev-log jobs (for testing)
+run_job:
+  stage: docker
+  image: $CI_REGISTRY_IMAGE:latest
+  script:
+    - echo "Running job: $JOB_NAME"
+    - node dist/jobs/index.js
+  variables:
+    NODE_ENV: production
+    JOB: $JOB_NAME
+  only:
+    variables:
+      - $JOB_NAME
+  when: manual

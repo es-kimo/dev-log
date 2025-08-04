@@ -54,5 +54,8 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "console.log('Health check passed')" || exit 1
 
-# Start the application
-CMD ["node", "dist/index.js"] 
+# Set environment for production
+ENV NODE_ENV=production
+
+# Start the job dispatcher
+ENTRYPOINT ["node", "dist/jobs/index.js"] 
