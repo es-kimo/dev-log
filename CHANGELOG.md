@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Environment Variable Management**: Centralized configuration with `dotenv-flow`
+  - `src/config.ts`: Centralized environment variable validation with Zod
+  - `.env.example`: Comprehensive template with all required variables
+  - Support for multiple environment files (`.env`, `.env.local`, `.env.development`, etc.)
+  - Runtime validation with clear error messages for missing/invalid variables
+- **Developer Experience**: Enhanced README with environment setup guide
+  - Environment Variables section with detailed variable descriptions
+  - Quick Start guide with step-by-step setup instructions
+  - Project structure documentation updates
+  - Local development workflow documentation
+
 ### Changed
 
 - **GitLab API Migration**: Migrated from `@gitbeaker/node` to `@gitbeaker/rest`
@@ -15,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated API parameter naming from snake_case to camelCase
   - Improved test coverage with comprehensive edge case testing
   - Added logger integration tests and constructor configuration validation
+- **Environment Configuration**: Centralized all environment variable handling
+  - Removed duplicate environment loading from individual modules
+  - Standardized environment validation across all components
+  - Enhanced error messages for missing required variables
 
 ### Added
 

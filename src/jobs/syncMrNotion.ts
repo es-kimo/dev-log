@@ -1,20 +1,6 @@
 import { listMergedMrsByAuthor } from '../lib/gitlab';
 import { createOrUpdatePage, type PropertiesMap } from '../lib/notion';
-import { z } from 'zod';
-import dotenvFlow from 'dotenv-flow';
-
-// Load environment variables
-dotenvFlow.config();
-
-// Environment variable schema
-const envSchema = z.object({
-  GITLAB_AUTHOR_USERNAME: z
-    .string()
-    .min(1, 'GITLAB_AUTHOR_USERNAME is required'),
-  GITLAB_PROJECT_ID: z.string().optional(), // Optional: if not provided, searches all projects
-  NOTION_DB_ID: z.string().min(1, 'NOTION_DB_ID is required'),
-  NOTION_UNIQUE_KEY_PROP: z.string().optional(),
-});
+import { env } from '../config';
 
 // Logger interface
 interface Logger {
@@ -158,8 +144,7 @@ export async function syncMrToNotion(
 ): Promise<SyncResult> {
   const startTime = Date.now();
 
-  // Parse environment variables
-  const env = envSchema.parse(process.env);
+  // Environment variables are already loaded and validated in config.ts
 
   // Merge config with defaults
   const finalConfig: SyncConfig = {
