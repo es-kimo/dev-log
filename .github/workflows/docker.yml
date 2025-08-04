@@ -2,7 +2,7 @@ name: Docker Build and Push
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci-test]
     tags: ['v*']
 
 env:
@@ -54,6 +54,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest node --version
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ls -la dist/
 
       - name: Output image digest
         run: echo "Image digest - ${{ steps.build.outputs.digest }}"
