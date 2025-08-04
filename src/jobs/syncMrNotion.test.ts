@@ -2,7 +2,6 @@ import { jest } from '@jest/globals';
 import { syncMrToNotion } from './syncMrNotion';
 import { listMergedMrsByAuthor } from '../lib/gitlab';
 import { createOrUpdatePage } from '../lib/notion';
-import type { MergeRequest } from '../lib/gitlab';
 
 // Mock environment variables
 process.env.GITLAB_HOST = 'https://gitlab.example.com';
@@ -37,7 +36,7 @@ const mockLogger = {
 
 // Sample MR data
 const now = new Date();
-const sampleMr: MergeRequest = {
+const sampleMr = {
   id: 123,
   iid: 456,
   title: 'Test MR Title',
@@ -53,6 +52,9 @@ const sampleMr: MergeRequest = {
     id: 789,
     name: 'John Doe',
     username: 'johndoe',
+    state: 'active',
+    avatar_url: 'https://gitlab.com/avatar.jpg',
+    web_url: 'https://gitlab.com/johndoe',
   },
   web_url: 'https://gitlab.com/test/project/-/merge_requests/456',
 };
@@ -104,7 +106,7 @@ describe('syncMrToNotion', () => {
 
   describe('MR processing', () => {
     it('should sync MRs successfully', async () => {
-      mockListMergedMrsByAuthor.mockResolvedValue([sampleMr]);
+      mockListMergedMrsByAuthor.mockResolvedValue([sampleMr] as any);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       const result = await syncMrToNotion(undefined, mockLogger);
       expect(result.total).toBe(1);
@@ -132,7 +134,7 @@ describe('syncMrToNotion', () => {
     it('should handle multiple MRs', async () => {
       const mr1 = { ...sampleMr, iid: 1, title: 'MR 1' };
       const mr2 = { ...sampleMr, iid: 2, title: 'MR 2' };
-      mockListMergedMrsByAuthor.mockResolvedValue([mr1, mr2]);
+      mockListMergedMrsByAuthor.mockResolvedValue([mr1, mr2] as any);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       const result = await syncMrToNotion(undefined, mockLogger);
       expect(result.total).toBe(2);
@@ -150,7 +152,7 @@ describe('syncMrToNotion', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      mockListMergedMrsByAuthor.mockResolvedValue([sampleMr]);
+      mockListMergedMrsByAuthor.mockResolvedValue([sampleMr] as any);
       mockCreateOrUpdatePage.mockRejectedValue(new Error('API Error'));
       const result = await syncMrToNotion(undefined, mockLogger);
       expect(result.total).toBe(1);
@@ -194,7 +196,7 @@ describe('syncMrToNotion', () => {
         ...sampleMr,
         labels: ['bug', 'enhancement'],
       };
-      mockListMergedMrsByAuthor.mockResolvedValue([mrWithLabels]);
+      mockListMergedMrsByAuthor.mockResolvedValue([mrWithLabels] as any);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       await syncMrToNotion(undefined, mockLogger);
       const callArgs = mockCreateOrUpdatePage.mock.calls[0][0];
@@ -206,7 +208,7 @@ describe('syncMrToNotion', () => {
           rich_text: [{ text: { content: 'John Doe' } }],
         },
         'Merged Date': {
-          date: { start: mrWithLabels.merged_at },
+          date: { start: mrWithLabels.merged_at as string },
         },
         URL: {
           url: 'https://gitlab.com/test/project/-/merge_requests/456',
@@ -237,7 +239,7 @@ describe('syncMrToNotion', () => {
         ...sampleMr,
         merged_at: null,
       };
-      mockListMergedMrsByAuthor.mockResolvedValue([mrWithoutMergedAt]);
+      mockListMergedMrsByAuthor.mockResolvedValue([mrWithoutMergedAt] as any);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       await syncMrToNotion(undefined, mockLogger);
       const callArgs = mockCreateOrUpdatePage.mock.calls[0][0];
@@ -249,7 +251,7 @@ describe('syncMrToNotion', () => {
         ...sampleMr,
         labels: undefined,
       };
-      mockListMergedMrsByAuthor.mockResolvedValue([mrWithoutLabels]);
+      mockListMergedMrsByAuthor.mockResolvedValue([mrWithoutLabels] as any);
       mockCreateOrUpdatePage.mockResolvedValue({} as any);
       await syncMrToNotion(undefined, mockLogger);
       const callArgs = mockCreateOrUpdatePage.mock.calls[0][0];

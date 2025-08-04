@@ -1,6 +1,6 @@
-import { Gitlab } from '@gitbeaker/node';
-import { z } from 'zod';
+import { Gitlab } from '@gitbeaker/rest';
 import dotenvFlow from 'dotenv-flow';
+import { z } from 'zod';
 
 // Load environment variables
 dotenvFlow.config();
@@ -41,44 +41,6 @@ export interface GitLabConfig {
   host: string;
   token: string;
   timeout?: number;
-}
-
-// Merge request interface
-export interface MergeRequest {
-  id: number;
-  iid: number;
-  title: string;
-  description: string;
-  state: string;
-  merged_at: string | null;
-  closed_at: string | null;
-  created_at: string;
-  updated_at: string;
-  target_branch: string;
-  source_branch: string;
-  author: {
-    id: number;
-    name: string;
-    username: string;
-  };
-  assignee?: {
-    id: number;
-    name: string;
-    username: string;
-  };
-  web_url: string;
-  labels?: string[] | Array<{ name: string }>;
-}
-
-// Project interface
-export interface Project {
-  id: number;
-  name: string;
-  path: string;
-  description?: string;
-  web_url: string;
-  created_at: string;
-  updated_at: string;
 }
 
 // List merged MRs parameters with proper date handling
@@ -172,9 +134,7 @@ export class GitLabApiWrapper {
   /**
    * List merged merge requests for a project
    */
-  public async listMergedMrs(
-    params: ListMergedMrsParams
-  ): Promise<MergeRequest[]> {
+  public async listMergedMrs(params: ListMergedMrsParams) {
     const { projectId, since, until, per_page = 100 } = params;
 
     // Convert dates to ISO strings if needed
@@ -193,12 +153,12 @@ export class GitLabApiWrapper {
         state: 'merged',
         created_after,
         created_before,
-        per_page,
-        order_by: 'created_at',
+        perPage: per_page, // Use camelCase for @gitbeaker/rest
+        orderBy: 'created_at',
         sort: 'desc',
       });
 
-      return mrs as unknown as MergeRequest[];
+      return mrs;
     } catch (error) {
       this.logger.error('Failed to list merged merge requests:', {
         projectId,
@@ -213,9 +173,7 @@ export class GitLabApiWrapper {
   /**
    * List merged merge requests by author across all projects or specific project
    */
-  public async listMergedMrsByAuthor(
-    params: ListMergedMrsByAuthorParams
-  ): Promise<MergeRequest[]> {
+  public async listMergedMrsByAuthor(params: ListMergedMrsByAuthorParams) {
     const { author, since, until, projectId, per_page = 100 } = params;
 
     // Convert dates to ISO strings if needed
@@ -234,8 +192,8 @@ export class GitLabApiWrapper {
         state: 'merged',
         updated_after,
         updated_before,
-        per_page,
-        order_by: 'updated_at',
+        perPage: per_page, // Use camelCase for @gitbeaker/rest
+        orderBy: 'updated_at',
         sort: 'desc',
         scope: 'all', // Search across all accessible projects
       };
@@ -248,7 +206,7 @@ export class GitLabApiWrapper {
       // Use object parameter for GitLab API compatibility
       const mrs = await this.client.MergeRequests.all(apiParams);
 
-      return mrs as unknown as MergeRequest[];
+      return mrs;
     } catch (error) {
       this.logger.error('Failed to list merged merge requests by author:', {
         author,
@@ -272,7 +230,7 @@ export class GitLabApiWrapper {
       until?: Date;
       per_page?: number;
     }
-  ): AsyncGenerator<MergeRequest[]> {
+  ) {
     const per_page = opts?.per_page ?? 100;
     const created_after = opts?.since?.toISOString();
     const created_before = opts?.until?.toISOString();
@@ -292,13 +250,13 @@ export class GitLabApiWrapper {
           state: 'merged',
           created_after,
           created_before,
-          per_page,
+          perPage: per_page, // Use camelCase for @gitbeaker/rest
           page,
-          order_by: 'created_at',
+          orderBy: 'created_at',
           sort: 'desc',
         });
 
-        const pageResults = mrs as unknown as MergeRequest[];
+        const pageResults = mrs;
         if (!pageResults.length) break;
 
         yield pageResults;
@@ -320,13 +278,10 @@ export class GitLabApiWrapper {
   /**
    * Get a specific merge request by ID
    */
-  public async getMergeRequest(
-    projectId: string | number,
-    mrIid: number
-  ): Promise<MergeRequest> {
+  public async getMergeRequest(projectId: string | number, mrIid: number) {
     try {
       const mr = await this.client.MergeRequests.show(projectId, mrIid);
-      return mr as unknown as MergeRequest;
+      return mr;
     } catch (error) {
       this.logger.error('Failed to get merge request:', {
         projectId,
@@ -344,19 +299,19 @@ export class GitLabApiWrapper {
     membership?: boolean;
     search?: string;
     per_page?: number;
-  }): Promise<Project[]> {
+  }) {
     const { membership = true, search, per_page = 100 } = params || {};
 
     try {
       const projects = await this.client.Projects.all({
         membership,
         search,
-        per_page,
-        order_by: 'created_at',
+        perPage: per_page, // Use camelCase for @gitbeaker/rest
+        orderBy: 'created_at',
         sort: 'desc',
       });
 
-      return projects as unknown as Project[];
+      return projects;
     } catch (error) {
       this.logger.error('Failed to list projects:', {
         membership,
@@ -370,10 +325,10 @@ export class GitLabApiWrapper {
   /**
    * Get project information
    */
-  public async getProject(projectId: string | number): Promise<Project> {
+  public async getProject(projectId: string | number) {
     try {
       const project = await this.client.Projects.show(projectId);
-      return project as unknown as Project;
+      return project;
     } catch (error) {
       this.logger.error('Failed to get project:', {
         projectId,

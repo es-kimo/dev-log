@@ -11,8 +11,10 @@ const mockEnv = {
 process.env.GITLAB_HOST = mockEnv.GITLAB_HOST;
 process.env.GITLAB_TOKEN = mockEnv.GITLAB_TOKEN;
 
-// Mock @gitbeaker/node
-jest.mock('@gitbeaker/node');
+// Mock @gitbeaker/rest with explicit constructor mock
+jest.mock('@gitbeaker/rest', () => ({
+  Gitlab: jest.fn(),
+}));
 
 // Mock dotenv-flow
 jest.mock('dotenv-flow', () => ({
@@ -20,13 +22,12 @@ jest.mock('dotenv-flow', () => ({
 }));
 
 // Import after setting environment variables
+import { Gitlab } from '@gitbeaker/rest';
 import {
   GitLabApiWrapper,
-  MergeRequest,
   ListMergedMrsParams,
   ListMergedMrsByAuthorParams,
 } from './gitlab';
-import { Gitlab } from '@gitbeaker/node';
 
 describe('GitLab API Wrapper', () => {
   let mockGitlabInstance: any;
@@ -59,9 +60,10 @@ describe('GitLab API Wrapper', () => {
   });
 
   afterEach(() => {
-    // Clean up environment variables
+    // Clean up environment variables and mocks
     delete process.env.GITLAB_HOST;
     delete process.env.GITLAB_TOKEN;
+    jest.clearAllMocks();
   });
 
   describe('Singleton Pattern', () => {
@@ -82,6 +84,63 @@ describe('GitLab API Wrapper', () => {
 
       expect(client1).toBe(client2);
       expect(Gitlab).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reset singleton instance when resetForTests is called', () => {
+      const instance1 = GitLabApiWrapper.getInstance();
+      GitLabApiWrapper.resetForTests();
+      const instance2 = GitLabApiWrapper.getInstance();
+
+      expect(instance1).not.toBe(instance2);
+    });
+  });
+
+  describe('GitLab Constructor Configuration', () => {
+    it('should pass environment variables to Gitlab constructor', () => {
+      (Gitlab as jest.MockedClass<typeof Gitlab>).mockClear();
+
+      GitLabApiWrapper.getInstance();
+
+      expect(Gitlab).toHaveBeenCalledWith({
+        host: mockEnv.GITLAB_HOST,
+        token: mockEnv.GITLAB_TOKEN,
+      });
+    });
+
+    it('should pass custom configuration to Gitlab constructor', () => {
+      (Gitlab as jest.MockedClass<typeof Gitlab>).mockClear();
+
+      const customConfig = {
+        host: 'https://custom.gitlab.com',
+        token: 'custom-token',
+        timeout: 5000,
+      };
+
+      GitLabApiWrapper.getInstance(customConfig);
+
+      expect(Gitlab).toHaveBeenCalledWith({
+        host: customConfig.host,
+        token: customConfig.token,
+        requesterOptions: {
+          timeout: customConfig.timeout,
+        },
+      });
+    });
+
+    it('should prioritize custom config over environment variables', () => {
+      (Gitlab as jest.MockedClass<typeof Gitlab>).mockClear();
+
+      const customConfig = {
+        host: 'https://custom.gitlab.com',
+        token: 'custom-token',
+      };
+
+      GitLabApiWrapper.getInstance(customConfig);
+
+      expect(Gitlab).toHaveBeenCalledWith({
+        host: customConfig.host,
+        token: customConfig.token,
+      });
     });
   });
 
@@ -111,8 +170,55 @@ describe('GitLab API Wrapper', () => {
     });
   });
 
+  describe('Logger Integration', () => {
+    it('should use custom logger when provided', async () => {
+      const mockLogger = {
+        warn: jest.fn(),
+        error: jest.fn(),
+        info: jest.fn(),
+      };
+
+      const instance = GitLabApiWrapper.getInstance(undefined, mockLogger);
+
+      // Trigger an error to test logger
+      const error = new Error('API Error');
+      mockGitlabInstance.MergeRequests.all.mockRejectedValue(error);
+
+      await expect(
+        instance.listMergedMrs({ projectId: 'test' })
+      ).rejects.toThrow('API Error');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to list merged merge requests:',
+        expect.objectContaining({
+          projectId: 'test',
+          error: 'API Error',
+        })
+      );
+    });
+
+    it('should use default console logger when no custom logger provided', async () => {
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const instance = GitLabApiWrapper.getInstance();
+
+      const error = new Error('API Error');
+      mockGitlabInstance.MergeRequests.all.mockRejectedValue(error);
+
+      await expect(
+        instance.listMergedMrs({ projectId: 'test' })
+      ).rejects.toThrow('API Error');
+
+      expect(consoleSpy).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe('listMergedMrs', () => {
-    const mockMergeRequests: MergeRequest[] = [
+    const mockMergeRequests = [
       {
         id: 1,
         iid: 1,
@@ -129,6 +235,9 @@ describe('GitLab API Wrapper', () => {
           id: 1,
           name: 'Test User',
           username: 'testuser',
+          state: 'active',
+          avatar_url: 'https://gitlab.example.com/avatar.jpg',
+          web_url: 'https://gitlab.example.com/testuser',
         },
         web_url: 'https://gitlab.example.com/test/project/-/merge_requests/1',
       },
@@ -148,6 +257,9 @@ describe('GitLab API Wrapper', () => {
           id: 2,
           name: 'Test User 2',
           username: 'testuser2',
+          state: 'active',
+          avatar_url: 'https://gitlab.example.com/avatar2.jpg',
+          web_url: 'https://gitlab.example.com/testuser2',
         },
         web_url: 'https://gitlab.example.com/test/project/-/merge_requests/2',
       },
@@ -173,8 +285,8 @@ describe('GitLab API Wrapper', () => {
           state: 'merged',
           created_after: '2024-01-01T00:00:00Z',
           created_before: '2024-01-31T23:59:59Z',
-          per_page: 50,
-          order_by: 'created_at',
+          perPage: 50,
+          orderBy: 'created_at',
           sort: 'desc',
         })
       );
@@ -202,8 +314,8 @@ describe('GitLab API Wrapper', () => {
           state: 'merged',
           created_after: sinceDate.toISOString(),
           created_before: untilDate.toISOString(),
-          per_page: 50,
-          order_by: 'created_at',
+          perPage: 50,
+          orderBy: 'created_at',
           sort: 'desc',
         })
       );
@@ -225,8 +337,8 @@ describe('GitLab API Wrapper', () => {
           state: 'merged',
           created_after: undefined,
           created_before: undefined,
-          per_page: 100,
-          order_by: 'created_at',
+          perPage: 100,
+          orderBy: 'created_at',
           sort: 'desc',
         })
       );
@@ -242,6 +354,18 @@ describe('GitLab API Wrapper', () => {
 
       const instance = GitLabApiWrapper.getInstance();
       await expect(instance.listMergedMrs(params)).rejects.toThrow('API Error');
+    });
+
+    it('should preserve original error message from GitLab API', async () => {
+      const originalError = new Error('E_TIMEOUT');
+      mockGitlabInstance.MergeRequests.all.mockRejectedValue(originalError);
+
+      const params: ListMergedMrsParams = {
+        projectId: 'test/project',
+      };
+
+      const instance = GitLabApiWrapper.getInstance();
+      await expect(instance.listMergedMrs(params)).rejects.toThrow('E_TIMEOUT');
     });
 
     it('should validate ISO 8601 date format', async () => {
@@ -271,7 +395,7 @@ describe('GitLab API Wrapper', () => {
   });
 
   describe('listMergedMrsByAuthor', () => {
-    const mockMergeRequests: MergeRequest[] = [
+    const mockMergeRequests = [
       {
         id: 1,
         iid: 1,
@@ -288,6 +412,9 @@ describe('GitLab API Wrapper', () => {
           id: 1,
           name: 'Test User',
           username: 'testuser',
+          state: 'active',
+          avatar_url: 'https://gitlab.example.com/avatar.jpg',
+          web_url: 'https://gitlab.example.com/testuser',
         },
         web_url: 'https://gitlab.example.com/test/project/-/merge_requests/1',
       },
@@ -307,6 +434,9 @@ describe('GitLab API Wrapper', () => {
           id: 2,
           name: 'Test User 2',
           username: 'testuser2',
+          state: 'active',
+          avatar_url: 'https://gitlab.example.com/avatar2.jpg',
+          web_url: 'https://gitlab.example.com/testuser2',
         },
         web_url: 'https://gitlab.example.com/test/project/-/merge_requests/2',
       },
@@ -332,8 +462,8 @@ describe('GitLab API Wrapper', () => {
           state: 'merged',
           updated_after: '2024-01-01T00:00:00Z',
           updated_before: '2024-01-31T23:59:59Z',
-          per_page: 50,
-          order_by: 'updated_at',
+          perPage: 50,
+          orderBy: 'updated_at',
           sort: 'desc',
           scope: 'all',
         })
@@ -362,8 +492,8 @@ describe('GitLab API Wrapper', () => {
           state: 'merged',
           updated_after: '2024-01-01T00:00:00Z',
           updated_before: '2024-01-31T23:59:59Z',
-          per_page: 50,
-          order_by: 'updated_at',
+          perPage: 50,
+          orderBy: 'updated_at',
           sort: 'desc',
           scope: 'all',
         })
@@ -392,8 +522,8 @@ describe('GitLab API Wrapper', () => {
           state: 'merged',
           updated_after: sinceDate.toISOString(),
           updated_before: untilDate.toISOString(),
-          per_page: 50,
-          order_by: 'updated_at',
+          perPage: 50,
+          orderBy: 'updated_at',
           sort: 'desc',
           scope: 'all',
         })
@@ -416,8 +546,8 @@ describe('GitLab API Wrapper', () => {
           state: 'merged',
           updated_after: undefined,
           updated_before: undefined,
-          per_page: 100,
-          order_by: 'updated_at',
+          perPage: 100,
+          orderBy: 'updated_at',
           sort: 'desc',
           scope: 'all',
         })
@@ -465,7 +595,7 @@ describe('GitLab API Wrapper', () => {
   });
 
   describe('getMergeRequest', () => {
-    const mockMR: MergeRequest = {
+    const mockMR = {
       id: 1,
       iid: 1,
       title: 'Test MR',
@@ -481,6 +611,9 @@ describe('GitLab API Wrapper', () => {
         id: 1,
         name: 'Test User',
         username: 'testuser',
+        state: 'active',
+        avatar_url: 'https://gitlab.example.com/avatar.jpg',
+        web_url: 'https://gitlab.example.com/testuser',
       },
       web_url: 'https://gitlab.example.com/test/project/-/merge_requests/1',
     };
@@ -525,8 +658,8 @@ describe('GitLab API Wrapper', () => {
       expect(mockGitlabInstance.Projects.all).toHaveBeenCalledWith({
         membership: true,
         search: undefined,
-        per_page: 100,
-        order_by: 'created_at',
+        perPage: 100,
+        orderBy: 'created_at',
         sort: 'desc',
       });
     });
@@ -545,8 +678,8 @@ describe('GitLab API Wrapper', () => {
       expect(mockGitlabInstance.Projects.all).toHaveBeenCalledWith({
         membership: false,
         search: 'test',
-        per_page: 50,
-        order_by: 'created_at',
+        perPage: 50,
+        orderBy: 'created_at',
         sort: 'desc',
       });
     });
@@ -594,7 +727,7 @@ describe('GitLab API Wrapper', () => {
   });
 
   describe('listMergedMrsIterator', () => {
-    const mockMergeRequests: MergeRequest[] = [
+    const mockMergeRequests = [
       {
         id: 1,
         iid: 1,
@@ -611,19 +744,22 @@ describe('GitLab API Wrapper', () => {
           id: 1,
           name: 'Test User',
           username: 'testuser',
+          state: 'active',
+          avatar_url: 'https://gitlab.example.com/avatar.jpg',
+          web_url: 'https://gitlab.example.com/testuser',
         },
         web_url: 'https://gitlab.example.com/test/project/-/merge_requests/1',
       },
     ];
 
-    it('should paginate through merge requests', async () => {
+    it('should return exactly one page when last page has fewer results than per_page', async () => {
       // Mock first page with data, second page empty
       mockGitlabInstance.MergeRequests.all
         .mockResolvedValueOnce(mockMergeRequests)
         .mockResolvedValueOnce([]);
 
       const instance = GitLabApiWrapper.getInstance();
-      const pages: MergeRequest[][] = [];
+      const pages: any[] = [];
 
       for await (const page of instance.listMergedMrsIterator('test/project', {
         since: new Date('2024-01-01'),
@@ -640,12 +776,76 @@ describe('GitLab API Wrapper', () => {
           projectId: 'test/project',
           state: 'merged',
           created_after: '2024-01-01T00:00:00.000Z',
-          per_page: 50,
+          perPage: 50,
           page: 1,
-          order_by: 'created_at',
+          orderBy: 'created_at',
           sort: 'desc',
         })
       );
+    });
+
+    it('should handle until parameter correctly', async () => {
+      mockGitlabInstance.MergeRequests.all
+        .mockResolvedValueOnce(mockMergeRequests)
+        .mockResolvedValueOnce([]);
+
+      const instance = GitLabApiWrapper.getInstance();
+      const pages: any[] = [];
+
+      for await (const page of instance.listMergedMrsIterator('test/project', {
+        since: new Date('2024-01-01'),
+        until: new Date('2024-01-31'),
+        per_page: 50,
+      })) {
+        pages.push(page);
+      }
+
+      expect(mockGitlabInstance.MergeRequests.all).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectId: 'test/project',
+          state: 'merged',
+          created_after: '2024-01-01T00:00:00.000Z',
+          created_before: '2024-01-31T00:00:00.000Z',
+          perPage: 50,
+          page: 1,
+          orderBy: 'created_at',
+          sort: 'desc',
+        })
+      );
+    });
+
+    it('should handle multiple pages correctly', async () => {
+      const page1 = mockMergeRequests;
+      const page2 = [{ ...mockMergeRequests[0], id: 2, iid: 2 }];
+
+      mockGitlabInstance.MergeRequests.all
+        .mockResolvedValueOnce(page1)
+        .mockResolvedValueOnce(page2)
+        .mockResolvedValueOnce([]);
+
+      const instance = GitLabApiWrapper.getInstance();
+      const pages: any[] = [];
+
+      for await (const page of instance.listMergedMrsIterator('test/project', {
+        per_page: 1, // Force multiple pages
+      })) {
+        pages.push(page);
+      }
+
+      expect(pages).toHaveLength(2);
+      expect(pages[0]).toEqual(page1);
+      expect(pages[1]).toEqual(page2);
+      expect(mockGitlabInstance.MergeRequests.all).toHaveBeenCalledTimes(3);
+    });
+
+    it('should handle API errors gracefully', async () => {
+      const error = new Error('API Error');
+      mockGitlabInstance.MergeRequests.all.mockRejectedValue(error);
+
+      const instance = GitLabApiWrapper.getInstance();
+      const iterator = instance.listMergedMrsIterator('test/project');
+
+      await expect(iterator.next()).rejects.toThrow('API Error');
     });
   });
 

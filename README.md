@@ -1,6 +1,6 @@
 # dev-log
 
-Dev log sync automation project built with TypeScript and Node.js 18.
+Dev log sync automation project built with TypeScript and Node.js 18. Features GitLab API integration using `@gitbeaker/rest` for optimal performance and type safety.
 
 ## 🚀 Quick Start
 
