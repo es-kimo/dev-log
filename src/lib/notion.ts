@@ -7,7 +7,7 @@ import type {
   DatabaseObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints';
 import PQueue from 'p-queue';
-import { env } from '../config';
+import { env } from '../config.js';
 
 // 공식 Notion 속성 타입
 export type PropertiesMap = CreatePageParameters['properties'];
@@ -170,13 +170,22 @@ export class NotionApiWrapper {
           });
         } else {
           this.logger.info(`Creating new page with unique key: ${uniqueKey}`);
+
+          // Try to parse as number first (for MR IID)
+          const numericKey = parseInt(uniqueKey, 10);
+          const isNumeric = !isNaN(numericKey);
+
           result = await this.client.pages.create({
             parent: parent || { database_id: this.config.databaseId },
             properties: {
               ...properties,
-              [uniqueKeyProp]: {
-                title: [{ text: { content: uniqueKey } }],
-              },
+              [uniqueKeyProp]: isNumeric
+                ? {
+                    number: numericKey,
+                  }
+                : {
+                    title: [{ text: { content: uniqueKey } }],
+                  },
             },
           });
         }
@@ -210,12 +219,25 @@ export class NotionApiWrapper {
     uniqueKey: string
   ): Promise<PageObjectResponse | null> {
     const uniqueKeyProp = this.config.uniqueKeyProperty;
+
+    // Try to parse as number first (for MR IID)
+    const numericKey = parseInt(uniqueKey, 10);
+    const isNumeric = !isNaN(numericKey);
+
     const results = await this.queryDatabase({
       filter: {
         property: uniqueKeyProp,
-        title: {
-          equals: uniqueKey,
-        },
+        ...(isNumeric
+          ? {
+              number: {
+                equals: numericKey,
+              },
+            }
+          : {
+              title: {
+                equals: uniqueKey,
+              },
+            }),
       },
       page_size: 1,
     });

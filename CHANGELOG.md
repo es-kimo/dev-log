@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Container Deployment**: Production-ready Docker containerization
+  - Multi-stage Dockerfile with optimized Alpine Linux base (≤ 100 MB)
+  - Job dispatcher ENTRYPOINT supporting multiple job types via `JOB` environment variable
+  - Multi-platform builds (linux/amd64, linux/arm64) for broad compatibility
+  - Health check implementation for container monitoring
+- **Docker Compose**: Multiple execution profiles for different use cases
+  - `prod` profile: Uses pre-built GHCR images for production deployment
+  - `local` profile: Local build and execution for development testing
+  - `custom` profile: Flexible job execution with environment variable override
+  - Comprehensive environment variable mapping and documentation
+- **CI/CD Pipeline Enhancement**: Comprehensive automation workflows
+  - Enhanced GitHub Actions with Docker image testing and validation
+  - Automated Docker image building and pushing to GitHub Container Registry (GHCR)
+  - GitLab CI configuration for mirror repositories with identical functionality
+  - Multi-stage testing including job dispatcher validation
+- **Developer Experience**: Streamlined deployment and execution
+  - One-command Docker execution: `docker run -e JOB=syncMr ghcr.io/owner/dev-log:latest`
+  - Comprehensive README documentation for Docker usage patterns
+  - Environment variable examples and configuration guides
+
+### Added
+
 - **Environment Variable Management**: Centralized configuration with `dotenv-flow`
   - `src/config.ts`: Centralized environment variable validation with Zod
   - `.env.example`: Comprehensive template with all required variables

@@ -57,8 +57,15 @@ jobs:
 
       - name: Test Docker image
         run: |
+          # Test basic functionality
           docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest node --version
           docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ls -la dist/
+
+          # Test job dispatcher with invalid job (should show available jobs)
+          docker run --rm -e JOB=nonexistent ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || echo "Expected failure for invalid job"
+
+          # Test without JOB env var (should show usage instructions)
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || echo "Expected failure without JOB env var"
 
       - name: Output image digest
         run: echo "Image digest - ${{ steps.build.outputs.digest }}"

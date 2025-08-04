@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { syncMrToNotion } from './syncMrNotion';
-import { listMergedMrsByAuthor } from '../lib/gitlab';
-import { createOrUpdatePage } from '../lib/notion';
+import { listMergedMrsByAuthor } from '../lib/gitlab.js';
+import { createOrUpdatePage } from '../lib/notion.js';
 
 // Mock environment variables
 process.env.GITLAB_HOST = 'https://gitlab.example.com';
@@ -115,8 +115,11 @@ describe('syncMrToNotion', () => {
       expect(result.failed).toBe(0);
       expect(result.errors).toHaveLength(0);
       expect(mockCreateOrUpdatePage).toHaveBeenCalledWith({
-        uniqueKey: 'MR-456',
+        uniqueKey: '456',
         properties: expect.objectContaining({
+          'MR IID': {
+            number: 456,
+          },
           Title: expect.objectContaining({
             title: [{ text: { content: 'Test MR Title' } }],
           }),
@@ -143,11 +146,11 @@ describe('syncMrToNotion', () => {
       expect(mockCreateOrUpdatePage).toHaveBeenCalledTimes(2);
       expect(mockCreateOrUpdatePage).toHaveBeenNthCalledWith(
         1,
-        expect.objectContaining({ uniqueKey: 'MR-1' })
+        expect.objectContaining({ uniqueKey: '1' })
       );
       expect(mockCreateOrUpdatePage).toHaveBeenNthCalledWith(
         2,
-        expect.objectContaining({ uniqueKey: 'MR-2' })
+        expect.objectContaining({ uniqueKey: '2' })
       );
     });
 

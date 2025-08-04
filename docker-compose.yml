@@ -1,28 +1,68 @@
+# Example docker-compose configuration for dev-log project
+# For production, use pre-built images from GHCR
+version: '3.8'
+
 services:
-  dev-log:
+  # Production example with GHCR image
+  dev-log-prod:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-owner}/dev-log:latest
+    container_name: dev-log-prod
+    environment:
+      - NODE_ENV=production
+      - JOB=syncMr # Default job, can be overridden
+      # Required environment variables - set these in your .env file
+      - GITLAB_HOST=${GITLAB_HOST}
+      - GITLAB_TOKEN=${GITLAB_TOKEN}
+      - NOTION_TOKEN=${NOTION_TOKEN}
+      - NOTION_DB_ID=${NOTION_DB_ID}
+    env_file:
+      - .env
+    restart: 'no' # Run once for scheduled jobs
+    profiles:
+      - prod
+
+  # Local development build
+  dev-log-local:
     build:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: dev-log
-    ports:
-      - '3000:3000'
+    container_name: dev-log-local
     environment:
       - NODE_ENV=production
+      - JOB=syncMr # Default job, can be overridden
+      # Required environment variables - set these in your .env file
+      - GITLAB_HOST=${GITLAB_HOST}
+      - GITLAB_TOKEN=${GITLAB_TOKEN}
+      - NOTION_TOKEN=${NOTION_TOKEN}
+      - NOTION_DB_ID=${NOTION_DB_ID}
     env_file:
       - .env
-    volumes:
-      - ./.env:/app/.env:ro
-    restart: unless-stopped
-    healthcheck:
-      test: ['CMD', 'node', '-e', "console.log('Health check passed')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - dev-log-network
+    restart: 'no' # Run once for scheduled jobs
+    profiles:
+      - local
 
-networks:
-  dev-log-network:
-    driver: bridge
+  # Development with different job
+  dev-log-custom:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: dev-log-custom
+    environment:
+      - NODE_ENV=production
+      - JOB=${JOB:-syncMr} # Job from environment or default to syncMr
+      # Required environment variables
+      - GITLAB_HOST=${GITLAB_HOST}
+      - GITLAB_TOKEN=${GITLAB_TOKEN}
+      - NOTION_TOKEN=${NOTION_TOKEN}
+      - NOTION_DB_ID=${NOTION_DB_ID}
+    env_file:
+      - .env
+    restart: 'no'
+    profiles:
+      - custom
+# Usage examples:
+# docker compose --profile local up dev-log-local     # Build and run locally
+# docker compose --profile prod up dev-log-prod       # Use GHCR image
+# JOB=collectComments docker compose --profile custom up dev-log-custom  # Custom job

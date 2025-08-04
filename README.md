@@ -76,37 +76,109 @@ yarn format:check
 
 ## 🐳 Docker
 
-### Build & Run
+### Quick Start
+
+```bash
+# Local development
+yarn dev          # ts-node-dev + dotenv-flow
+
+# Production testing
+docker compose up # Same image, production environment
+```
+
+### Run with Docker
+
+The project is containerized with multi-stage Dockerfile for optimal production deployment.
+
+#### Using Pre-built Images (Recommended)
+
+```bash
+# Run specific job (e.g., syncMr)
+docker run --rm \
+  -e JOB=syncMr \
+  -e GITLAB_HOST=https://gitlab.com \
+  -e GITLAB_TOKEN=your-token \
+  -e GITLAB_AUTHOR_USERNAME=your-username \
+  -e NOTION_TOKEN=your-notion-token \
+  -e NOTION_DB_ID=your-database-id \
+  ghcr.io/your-org/dev-log:latest
+
+# Or use environment file
+docker run --rm --env-file .env -e JOB=syncMr ghcr.io/your-org/dev-log:latest
+```
+
+#### Local Build & Run
 
 ```bash
 # Build the Docker image
 docker build -t dev-log .
 
-# Run the container
-docker run -p 3000:3000 dev-log
+# Run with specific job
+docker run --rm --env-file .env -e JOB=syncMr dev-log
 
-# Or use Docker Compose for easier management
-docker-compose up --build
+# List available jobs (will show error with job list)
+docker run --rm dev-log
 ```
 
 ### Docker Compose
 
+Three profiles are available for different use cases:
+
 ```bash
-# Start the application
-docker-compose up
+# Use pre-built GHCR image (production)
+docker compose --profile prod up dev-log-prod
 
-# Start in background
-docker-compose up -d
+# Build and run locally
+docker compose --profile local up dev-log-local
 
-# Build and start services
-docker-compose up --build
-
-# Stop services
-docker-compose down
-
-# View logs
-docker-compose logs -f dev-log-sync
+# Run with custom job
+JOB=collectComments docker compose --profile custom up dev-log-custom
 ```
+
+**Example docker-compose usage:**
+
+```bash
+# Set required environment variables in .env file
+echo "GITLAB_HOST=https://gitlab.com" >> .env
+echo "GITLAB_TOKEN=your-token" >> .env
+echo "GITLAB_AUTHOR_USERNAME=your-username" >> .env
+echo "NOTION_TOKEN=your-notion-token" >> .env
+echo "NOTION_DB_ID=your-database-id" >> .env
+
+# Run syncMr job with local build
+docker compose --profile local up dev-log-local
+
+# Run different job
+JOB=collectComments docker compose --profile custom up dev-log-custom
+```
+
+### Available Jobs
+
+The container entry point supports multiple jobs via the `JOB` environment variable:
+
+- `syncMr` - Sync GitLab merge requests to Notion (default)
+- `collectComments` - Collect and process MR comments (coming soon)
+
+**Job Examples:**
+
+```bash
+# Available jobs (shows help)
+docker run --rm ghcr.io/your-org/dev-log:latest
+
+# Sync merge requests
+docker run --rm --env-file .env -e JOB=syncMr ghcr.io/your-org/dev-log:latest
+
+# Custom job (when implemented)
+docker run --rm --env-file .env -e JOB=collectComments ghcr.io/your-org/dev-log:latest
+```
+
+### Image Information
+
+- **Registry**: GitHub Container Registry (GHCR)
+- **Image**: `ghcr.io/<owner>/dev-log`
+- **Tags**: `latest`, `main-<sha>`, version tags
+- **Size**: ≤ 100 MB (optimized Alpine-based image)
+- **Platforms**: `linux/amd64`, `linux/arm64`
 
 ## 🔧 Environment Variables
 
