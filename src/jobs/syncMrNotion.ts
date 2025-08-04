@@ -1,6 +1,6 @@
-import { listMergedMrsByAuthor } from '../lib/gitlab';
-import { createOrUpdatePage, type PropertiesMap } from '../lib/notion';
-import { env } from '../config';
+import { listMergedMrsByAuthor } from '../lib/gitlab.js';
+import { createOrUpdatePage, type PropertiesMap } from '../lib/notion.js';
+import { env } from '../config.js';
 
 // Logger interface
 interface Logger {

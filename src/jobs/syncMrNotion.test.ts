@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { syncMrToNotion } from './syncMrNotion';
-import { listMergedMrsByAuthor } from '../lib/gitlab';
-import { createOrUpdatePage } from '../lib/notion';
+import { listMergedMrsByAuthor } from '../lib/gitlab.js';
+import { createOrUpdatePage } from '../lib/notion.js';
 
 // Mock environment variables
 process.env.GITLAB_HOST = 'https://gitlab.example.com';

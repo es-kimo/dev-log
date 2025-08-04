@@ -7,7 +7,7 @@ import type {
   DatabaseObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints';
 import PQueue from 'p-queue';
-import { env } from '../config';
+import { env } from '../config.js';
 
 // 공식 Notion 속성 타입
 export type PropertiesMap = CreatePageParameters['properties'];

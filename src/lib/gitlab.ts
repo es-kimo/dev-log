@@ -1,5 +1,5 @@
 import { Gitlab } from '@gitbeaker/rest';
-import { env } from '../config';
+import { env } from '../config.js';
 
 // Cached ISO string validator for performance
 const isoString = (str: string) => {
