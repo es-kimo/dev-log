@@ -1,18 +1,11 @@
 import { Gitlab } from '@gitbeaker/rest';
-import dotenvFlow from 'dotenv-flow';
-import { z } from 'zod';
-
-// Load environment variables
-dotenvFlow.config();
-
-// Environment variable schema with ISO 8601 validation
-const envSchema = z.object({
-  GITLAB_HOST: z.string().url('GITLAB_HOST must be a valid URL'),
-  GITLAB_TOKEN: z.string().min(1, 'GITLAB_TOKEN is required'),
-});
+import { env } from '../config';
 
 // Cached ISO string validator for performance
-const isoString = z.string().datetime();
+const isoString = (str: string) => {
+  const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
+  return isoRegex.test(str);
+};
 
 // Helper function to convert Date to ISO string
 const toIso = (d?: string | Date): string | undefined => {
@@ -22,7 +15,7 @@ const toIso = (d?: string | Date): string | undefined => {
 
 // Helper function to validate ISO string
 const validateIsoString = (dateStr?: string, paramName?: string): void => {
-  if (dateStr && !isoString.safeParse(dateStr).success) {
+  if (dateStr && !isoString(dateStr)) {
     throw new Error(
       `Invalid ISO 8601 date format for "${paramName}" parameter`
     );
@@ -98,14 +91,10 @@ export class GitLabApiWrapper {
   }
 
   private parseEnvConfig(): GitLabConfig {
-    const env = envSchema.parse({
-      GITLAB_HOST: process.env.GITLAB_HOST,
-      GITLAB_TOKEN: process.env.GITLAB_TOKEN,
-    });
-
     return {
       host: env.GITLAB_HOST,
       token: env.GITLAB_TOKEN,
+      timeout: 30000, // 30 seconds default timeout
     };
   }
 

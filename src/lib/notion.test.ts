@@ -92,7 +92,7 @@ describe('NotionApiWrapper', () => {
       notionWrapper = NotionApiWrapper.getInstance();
       const config = notionWrapper.getConfig();
 
-      expect(config.token).toBe('test-token');
+      expect(config.token).toBe('test-notion-token');
       expect(config.databaseId).toBe('test-db-id');
       expect(config.maxRetries).toBe(5); // default value
       expect(config.baseDelay).toBe(1000); // default value
@@ -108,13 +108,13 @@ describe('NotionApiWrapper', () => {
       expect(config.baseDelay).toBe(100);
     });
 
-    it('should throw error when required env vars are missing', () => {
-      delete process.env.NOTION_TOKEN;
-      delete process.env.NOTION_DB_ID;
+    it('should use environment variables from centralized config', () => {
+      const instance = NotionApiWrapper.getInstance();
+      const config = instance.getConfig();
 
-      expect(() => {
-        NotionApiWrapper.getInstance();
-      }).toThrow('Invalid input: expected string, received undefined');
+      // The instance should be created successfully with environment variables
+      expect(config.token).toBe('test-notion-token');
+      expect(config.databaseId).toBe('test-db-id');
     });
   });
 

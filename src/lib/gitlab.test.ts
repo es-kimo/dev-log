@@ -104,6 +104,9 @@ describe('GitLab API Wrapper', () => {
       expect(Gitlab).toHaveBeenCalledWith({
         host: mockEnv.GITLAB_HOST,
         token: mockEnv.GITLAB_TOKEN,
+        requesterOptions: {
+          timeout: 30000,
+        },
       });
     });
 
@@ -145,28 +148,12 @@ describe('GitLab API Wrapper', () => {
   });
 
   describe('Environment Variables', () => {
-    it('should throw error when GITLAB_HOST is missing', () => {
-      delete process.env.GITLAB_HOST;
+    it('should use environment variables from centralized config', () => {
+      const instance = GitLabApiWrapper.getInstance();
+      const client = instance.getClient();
 
-      expect(() => {
-        GitLabApiWrapper.getInstance();
-      }).toThrow('Invalid input: expected string, received undefined');
-    });
-
-    it('should throw error when GITLAB_TOKEN is missing', () => {
-      delete process.env.GITLAB_TOKEN;
-
-      expect(() => {
-        GitLabApiWrapper.getInstance();
-      }).toThrow('Invalid input: expected string, received undefined');
-    });
-
-    it('should throw error when GITLAB_HOST is not a valid URL', () => {
-      process.env.GITLAB_HOST = 'invalid-url';
-
-      expect(() => {
-        GitLabApiWrapper.getInstance();
-      }).toThrow('GITLAB_HOST must be a valid URL');
+      // The instance should be created successfully with environment variables
+      expect(client).toBeDefined();
     });
   });
 

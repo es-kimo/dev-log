@@ -74,9 +74,25 @@ jobs:
 
       - name: Run tests
         run: yarn test
+        env:
+          NODE_ENV: test
+          LOG_LEVEL: info
+          GITLAB_HOST: https://gitlab.com
+          GITLAB_TOKEN: test-token
+          GITLAB_AUTHOR_USERNAME: test-user
+          NOTION_TOKEN: test-notion-token
+          NOTION_DB_ID: test-database-id
 
       - name: Run tests with coverage
         run: yarn test:coverage
+        env:
+          NODE_ENV: test
+          LOG_LEVEL: info
+          GITLAB_HOST: https://gitlab.com
+          GITLAB_TOKEN: test-token
+          GITLAB_AUTHOR_USERNAME: test-user
+          NOTION_TOKEN: test-notion-token
+          NOTION_DB_ID: test-database-id
 
   build:
     runs-on: ubuntu-latest

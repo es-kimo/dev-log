@@ -8,13 +8,40 @@ Dev log sync automation project built with TypeScript and Node.js 18. Features G
 
 - Node.js 18 or higher
 - Yarn package manager
+- GitLab Personal Access Token
+- Notion Integration Token
 - Docker (optional, for containerized deployment)
 
-### Installation
+### Installation & Setup
 
-```bash
-yarn install
-```
+1. **Clone and install dependencies**
+
+   ```bash
+   git clone <repository-url>
+   cd dev-log
+   yarn install
+   ```
+
+2. **Configure environment variables**
+
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+
+   # Edit .env with your actual values
+   nano .env  # or use your preferred editor
+   ```
+
+3. **Run the application**
+
+   ```bash
+   # Development mode
+   yarn dev
+
+   # Or build and run
+   yarn build
+   yarn start
+   ```
 
 ### Development
 
@@ -81,16 +108,46 @@ docker-compose down
 docker-compose logs -f dev-log-sync
 ```
 
-### Environment Variables
+## 🔧 Environment Variables
 
-Create a `.env` file in the project root for environment variables:
+This project uses `dotenv-flow` for environment variable management, supporting multiple environment files:
+
+- `.env` - Default environment variables
+- `.env.local` - Local overrides (gitignored)
+- `.env.development` - Development-specific variables
+- `.env.test` - Test-specific variables
+- `.env.production` - Production-specific variables
+
+### Required Environment Variables
+
+| Variable                 | Description                  | Example                                |
+| ------------------------ | ---------------------------- | -------------------------------------- |
+| `GITLAB_HOST`            | GitLab instance URL          | `https://gitlab.com`                   |
+| `GITLAB_TOKEN`           | GitLab Personal Access Token | `glpat-xxxxxxxxxxxxxxxx`               |
+| `GITLAB_AUTHOR_USERNAME` | GitLab username for MR sync  | `your-username`                        |
+| `NOTION_TOKEN`           | Notion Integration Token     | `secret_xxxxxxxxxxxxxxxx`              |
+| `NOTION_DB_ID`           | Notion Database ID           | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
+
+### Optional Environment Variables
+
+| Variable                 | Description                    | Default               |
+| ------------------------ | ------------------------------ | --------------------- |
+| `GITLAB_PROJECT_ID`      | Specific GitLab project ID     | Searches all projects |
+| `NOTION_UNIQUE_KEY_PROP` | Notion property for unique MRs | `MR IID`              |
+| `NODE_ENV`               | Node.js environment            | `development`         |
+| `LOG_LEVEL`              | Logging level                  | `info`                |
+
+### Environment File Setup
 
 ```bash
-# Example .env file
-NODE_ENV=production
-PORT=3000
-# Add your environment variables here
+# Copy the example file
+cp .env.example .env
+
+# Edit with your actual values
+nano .env
 ```
+
+**Important**: Never commit your actual `.env` file to version control. The `.env.example` file serves as a template.
 
 ## 🔄 CI/CD Pipeline
 
@@ -121,6 +178,7 @@ This project includes a comprehensive CI/CD pipeline with the following stages:
 dev-log/
 ├── src/                    # Source code
 │   ├── index.ts           # Main entry point
+│   ├── config.ts          # Environment configuration & validation
 │   ├── lib/               # API wrappers
 │   │   ├── gitlab.ts      # GitLab API wrapper
 │   │   └── notion.ts      # Notion API wrapper
@@ -129,6 +187,7 @@ dev-log/
 │   │   └── syncMrNotion.ts # MR sync job
 │   └── *.test.ts          # Test files
 ├── dist/                  # Compiled output (generated)
+├── .env.example           # Environment variables template
 ├── .github/workflows/     # CI/CD workflows
 │   ├── ci.yml            # CI pipeline
 │   ├── docker.yml        # Docker build & push
@@ -184,15 +243,20 @@ Automatically syncs GitLab merge requests to Notion database on a weekly basis.
 
 **Environment Variables Required**:
 
-```env
-GITLAB_HOST=https://gitlab.example.com
-GITLAB_TOKEN=your-gitlab-token
-GITLAB_AUTHOR_USERNAME=your-gitlab-username
-GITLAB_PROJECT_ID=your-project-id  # Optional: if not provided, searches all projects
-NOTION_TOKEN=your-notion-token
-NOTION_DB_ID=your-database-id
-NOTION_UNIQUE_KEY_PROP=MR IID  # Optional, defaults to "MR IID"
-```
+See the [Environment Variables](#-environment-variables) section above for detailed configuration.
+
+Required variables:
+
+- `GITLAB_HOST` - Your GitLab instance URL
+- `GITLAB_TOKEN` - GitLab Personal Access Token
+- `GITLAB_AUTHOR_USERNAME` - Your GitLab username
+- `NOTION_TOKEN` - Notion Integration Token
+- `NOTION_DB_ID` - Notion Database ID
+
+Optional variables:
+
+- `GITLAB_PROJECT_ID` - Specific project ID (defaults to all projects)
+- `NOTION_UNIQUE_KEY_PROP` - Unique key property name (defaults to "MR IID")
 
 **Manual Execution**:
 

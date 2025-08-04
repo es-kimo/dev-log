@@ -6,19 +6,8 @@ import type {
   PageObjectResponse,
   DatabaseObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints';
-import { z } from 'zod';
-import dotenvFlow from 'dotenv-flow';
 import PQueue from 'p-queue';
-
-// Load environment variables
-dotenvFlow.config();
-
-// Environment variable schema
-const envSchema = z.object({
-  NOTION_TOKEN: z.string().min(1, 'NOTION_TOKEN is required'),
-  NOTION_DB_ID: z.string().min(1, 'NOTION_DB_ID is required'),
-  NOTION_UNIQUE_KEY_PROP: z.string().optional(),
-});
+import { env } from '../config';
 
 // 공식 Notion 속성 타입
 export type PropertiesMap = CreatePageParameters['properties'];
@@ -88,7 +77,6 @@ export class NotionApiWrapper {
   }
 
   private parseEnvConfig(override?: Partial<NotionConfig>): NotionConfig {
-    const env = envSchema.parse(process.env);
     return {
       token: override?.token || env.NOTION_TOKEN,
       databaseId: override?.databaseId || env.NOTION_DB_ID,
