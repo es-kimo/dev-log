@@ -2,7 +2,7 @@ name: Docker Build and Push
 
 on:
   push:
-    branches: [main]
+    branches: [main, 24-docs-set-up-dotenv-flow-env-management-update-readme]
     tags: ['v*']
 
 env:
