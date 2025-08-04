@@ -1,4 +1,4 @@
-import { listMergedMrsByAuthor, type MergeRequest } from '../lib/gitlab';
+import { listMergedMrsByAuthor } from '../lib/gitlab';
 import { createOrUpdatePage, type PropertiesMap } from '../lib/notion';
 import { z } from 'zod';
 import dotenvFlow from 'dotenv-flow';
@@ -52,7 +52,9 @@ interface SyncResult {
 /**
  * Convert GitLab MR to Notion properties
  */
-function mapMrToNotionProperties(mr: MergeRequest): PropertiesMap {
+function mapMrToNotionProperties(
+  mr: Awaited<ReturnType<typeof listMergedMrsByAuthor>>[number]
+): PropertiesMap {
   const properties: PropertiesMap = {};
 
   // Title (MR title)
@@ -81,14 +83,14 @@ function mapMrToNotionProperties(mr: MergeRequest): PropertiesMap {
   if (mr.merged_at) {
     properties['Merged Date'] = {
       date: {
-        start: mr.merged_at,
+        start: mr.merged_at as string,
       },
     };
   }
 
   // URL (MR web URL)
   properties['URL'] = {
-    url: mr.web_url,
+    url: mr.web_url as string,
   };
 
   // State
@@ -103,7 +105,7 @@ function mapMrToNotionProperties(mr: MergeRequest): PropertiesMap {
     rich_text: [
       {
         text: {
-          content: mr.source_branch,
+          content: mr.source_branch as string,
         },
       },
     ],
@@ -114,7 +116,7 @@ function mapMrToNotionProperties(mr: MergeRequest): PropertiesMap {
     rich_text: [
       {
         text: {
-          content: mr.target_branch,
+          content: mr.target_branch as string,
         },
       },
     ],
@@ -123,14 +125,14 @@ function mapMrToNotionProperties(mr: MergeRequest): PropertiesMap {
   // Created Date
   properties['Created Date'] = {
     date: {
-      start: mr.created_at,
+      start: mr.created_at as string,
     },
   };
 
   // Updated Date
   properties['Updated Date'] = {
     date: {
-      start: mr.updated_at,
+      start: mr.updated_at as string,
     },
   };
 
@@ -224,7 +226,9 @@ export async function syncMrToNotion(
 
         // Determine if it was created or updated (we can't easily tell from the API response)
         // For now, we'll assume it was created if it's a recent MR
-        const mrDate = new Date(mr.merged_at || mr.updated_at);
+        const mrDate = new Date(
+          (mr.merged_at as string) || (mr.updated_at as string)
+        );
         const isRecent = mrDate > since;
 
         if (isRecent) {

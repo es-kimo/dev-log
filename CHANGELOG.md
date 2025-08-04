@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **GitLab API Migration**: Migrated from `@gitbeaker/node` to `@gitbeaker/rest`
+  - Reduced bundle size and improved cold-start performance
+  - Enhanced type safety with official GitLab API types
+  - Updated API parameter naming from snake_case to camelCase
+  - Improved test coverage with comprehensive edge case testing
+  - Added logger integration tests and constructor configuration validation
+
 ### Added
 
 - **MR Sync Job**: Weekly GitLab MR to Notion database synchronization

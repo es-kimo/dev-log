@@ -49,8 +49,8 @@
     ]
   },
   "dependencies": {
-    "@gitbeaker/node": "~35.8.1",
     "@gitbeaker/requester-utils": "~43.3.0",
+    "@gitbeaker/rest": "^43.3.0",
     "@notionhq/client": "^4.0.1",
     "dotenv-flow": "^4.1.0",
     "ky": "^1.8.2",
